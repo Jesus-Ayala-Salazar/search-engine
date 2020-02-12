@@ -3,6 +3,13 @@ import os
 from bs4 import BeautifulSoup
 import lxml
 from nltk import word_tokenize
+import pymongo
+
+client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mongodb.net/test?retryWrites=true&w=majority")
+db = client.test
+SEdb = client["SEdb"]
+col = SEdb["InvInd"]
+print(db.list_collection_names())
 
 #tokenize --> use algorithms
 #dbdicto
@@ -34,6 +41,7 @@ def tokenize_each_file(parent: str):
 """tokenize
 INVIND[token] """
 if __name__ == "__main__":
+	print(client.list_database_names())
 	path = sys.argv[1]
 	tokenize_each_file(path)
 
