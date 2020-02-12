@@ -1,6 +1,9 @@
+import sys
 import os
 from bs4 import BeautifulSoup
 import lxml
+from nltk import word_tokenize
+
 #tokenize --> use algorithms
 #dbdicto
 def tokenize_each_file(parent: str):
@@ -14,17 +17,24 @@ def tokenize_each_file(parent: str):
 				#print(str(folde
 				with open(parent+"\\"+ folder+"\\" +file, "rb") as f:
 					html= f.read()
-					#html = "<HTML>test<p>test2</p></HTML>"
+					html = "<html>hello <p>world</html>"
 					soup = BeautifulSoup(html, "lxml")
-					
-					#print(folder, file)
-					#break
-				
-		#break
-	#print(str(soup.prettify()))
+
+					title = soup.title
+					h1 = soup.h1
+					h2 = soup.h2
+					h3 = soup.h3
+					h4 = soup.h4
+					body = soup.body.string
+					p = soup.p.string
+					print(body, "\n\n", p)
+				break
+		break
+
 """tokenize
 INVIND[token] """
 if __name__ == "__main__":
-	tokenize_each_file("C:\\Users\\eduar\\121\\Assign3\\WEBPAGES_CLEAN")
+	path = sys.argv[1]
+	tokenize_each_file(path)
 
 
