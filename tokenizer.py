@@ -1,4 +1,5 @@
 import os
+import sys
 from bs4 import BeautifulSoup
 import lxml
 #tokenize --> use algorithms
@@ -10,13 +11,12 @@ def tokenize_each_file(parent: str):
 			continue
 		else:
 			for file in os.listdir(parent+"\\"+folder):
-				#print(str(folde
 				with open(parent+"\\"+ folder+"\\" +file, "rb") as f:
-					html= f.read()
+					html = f.read()
 					print(html)
 					soup = BeautifulSoup(f, "lxml")
 					#print(folder, file)
-					print(soup.prettify())
+					soup.prettify()
 					break
 				
 		break
@@ -25,6 +25,5 @@ def tokenize_each_file(parent: str):
 
 
 if __name__ == "__main__":
-	tokenize_each_file("C:\\Users\\eduar\\121\\Assign3\\WEBPAGES_CLEAN")
-
-
+	path = sys.argv[1]
+	tokenize_each_file(path)
