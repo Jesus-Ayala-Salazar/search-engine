@@ -3,49 +3,50 @@ import os
 import sys
 from bs4 import BeautifulSoup
 import lxml
-from nltk import word_tokenize
+import json
+import nltk
+from nltk.probability import FreqDist
+from collections import defaultdict
 import pymongo
 
-client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mongodb.net/test?retryWrites=true&w=majority")
-db = client['test-database']
-col = db['test-collection']
+client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mongodb.net/test?retryWrites=true&w=majority") #connects to mongodb
+db = client['test-database'] #creates db
+col = db['test-collection'] #creates Collection
 
-mydict = {"informatics":{"doc_1": 5, "doc_3": 7}, "nice": {"doc_2": 5, "doc_4": 6}}
+# possible Posting structure
+class Posting:
+	def __init__(self):
+		self.doc_id = None
+		self.freq = 0
+		self.tags = []
 
-#x = col.insert_one(mydict)
 
-#tokenize --> use algorithms
-#dbdicto
-def tokenize_each_file(parent: str):
+def tokenize_each_file(filename: str):
 	"""Given a directory open each file within the given corpus and tokenize"""
-	for folder in os.listdir(parent):
-		if folder.endswith(".json") or folder.endswith(".tsv"):
-			continue
-		else:
-			for file in os.listdir(parent+"\\"+folder):
-				with open(parent+"\\"+ folder+"\\" +file, "rb") as f:
-					html= f.read()
-					html = "<html>hello <p>world</html>"
-					soup = BeautifulSoup(html, "lxml")
 
-					title = soup.title
-					h1 = soup.h1
-					h2 = soup.h2
-					h3 = soup.h3
-					h4 = soup.h4
-					body = soup.body.string
-					p = soup.p.string
-					print(body, "\n\n", p)
-				break
+	# extract html identifiers from json file
+	with open(filename, 'r', encoding='utf8') as json_file:
+		data = json.load(json_file)
+
+	# get web pages directory
+	dirname = os.path.dirname(filename)
+
+	# iterate over each html file
+	for identifier in data:
+		html_filename = os.path.join(dirname, '0/18')
+
+		# need to get frequency in doc, doc_id, tags the token appears in
+		with open(html_filename, 'rb') as html_file:
+			soup = BeautifulSoup(html_file, 'lxml')
+			token_list = nltk.word_tokenize(soup.get_text())
+			token_list = [t.lower() for t in token_list if t.isalnum() and len(t) > 1]
+			print(token_list)
 		break
 
-"""tokenize
-INVIND[token] """
+
 if __name__ == "__main__":
-	#print(client.list_database_names())
-	#path = sys.argv[1]
-	path = "C:\\Users\\eduar\\121\\Assign3\\WEBPAGES_CLEAN"
+	path = sys.argv[1]
 	tokenize_each_file(path)
-	tokens = col.find_one()
-	print(tokens["informatics"])
-	print(tokens["nice"])
+
+	# "dictionary" file {token : [Posting]}
+	dict_postings = {}
