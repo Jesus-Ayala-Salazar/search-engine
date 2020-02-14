@@ -8,11 +8,11 @@ import nltk
 from nltk.probability import FreqDist
 from collections import defaultdict
 import pymongo
-
-from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
 from string import punctuation
 import re
+import math
 
 
 #IDF(t) = log_e(Total number of documents / Number of documents with term t in it).
@@ -31,10 +31,12 @@ class Posting:
 
 	# for debugging
 	def __str__(self):
-		return f'doc id: {self.doc_id} | freq: {self.freq} | tags: {self.tags}'
+		return f'doc id: {self.doc_id} | freq: {self.freq} | tags: {self.tags} | tf_idf: {self.tf_idf}'
 	
 
-def tokenize_each_file(filename: str, postings_dict: {str: [Posting]}):
+def tokenize_each_file(filename: str,
+					   postings_dict: {str: [Posting]},
+					   num_tokens_dict: {str: int}):
 	"""Given a directory open each file within the given corpus and tokenize"""
 
 	# extract html identifiers from json file
@@ -45,16 +47,17 @@ def tokenize_each_file(filename: str, postings_dict: {str: [Posting]}):
 	dirname = os.path.dirname(filename)
 
 	# iterate over each html file
-	for identifier in data:
-		html_filename = os.path.join(dirname, identifier)     # use '13/16' for html with title and body
+	for doc_id in data:
+		html_filename = os.path.join(dirname, doc_id)     # use '13/16' for html with title and body
 
 		# need to get frequency in doc, doc_id, tags the token appears in
 		with open(html_filename, 'rb') as html_file:
 			soup = BeautifulSoup(html_file, 'lxml')
 			lemmatizer = WordNetLemmatizer()
-			token_list = []
+			num_tokens = 0
+			# token_list = []
 			# {token: single Posting}
-			inner_dict = defaultdict(lambda: Posting(identifier))
+			inner_dict = defaultdict(lambda: Posting(doc_id))
 			important_tags = {'title','h1','h2','h3','h4','h5','h6','strong'}
 
 			# for string in document
@@ -62,10 +65,11 @@ def tokenize_each_file(filename: str, postings_dict: {str: [Posting]}):
 				# for token in string
 				for t in nltk.word_tokenize(s):
 					# filtering
-					if t.isalnum() and len(t) > 1:
+					if t.isalnum() and len(t) > 1 and t not in set(stopwords.words('english')):
 						# add lemmatized token to list, increment frequency
 						token = lemmatizer.lemmatize(t.lower())
-						token_list.append(token)
+						num_tokens += 1
+						# token_list.append(token)
 						inner_dict[token].freq += 1
 
 						# if token in important tags, add it
@@ -80,14 +84,33 @@ def tokenize_each_file(filename: str, postings_dict: {str: [Posting]}):
 			for token in inner_dict:
 				postings_dict[token].append(inner_dict[token])
 
+			# add total number of tokens to doc_id dictionary
+			num_tokens_dict[doc_id] = num_tokens
+
 
 if __name__ == "__main__":
 	path = sys.argv[1]
+
 	# {token: [] of Postings}
 	postings_dict = defaultdict(list)
-	tokenize_each_file(path, postings_dict)
+
+	# {doc_id: number of terms in document}
+	num_tokens_dict = {}
+
+	tokenize_each_file(path, postings_dict, num_tokens_dict)
+
+	# calculate tf-idf
+	num_documents = len(num_tokens_dict)
+	for t in postings_dict:
+		for p in postings_dict[t]:
+			tf = p.freq / num_tokens_dict[p.doc_id]
+			idf = math.log(num_documents / len(postings_dict[t]), 10)
+			p.tf_idf = tf*idf
+
+	# write postings to file
 	with open('postings.txt', 'w', encoding='utf8') as file:
-		for t in postings_dict:
+		for t in sorted(postings_dict):
 			file.write(f'{t}:\n')
 			for p in postings_dict[t]:
 				file.write(f'{str(p)}\n')
+			file.write('\n')
