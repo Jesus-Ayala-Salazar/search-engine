@@ -7,16 +7,17 @@ from nltk import word_tokenize
 import pymongo
 
 client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mongodb.net/test?retryWrites=true&w=majority")
-db = client.test
-SEdb = client["SEdb"]
-col = SEdb["InvInd"]
-print(db.list_collection_names())
+db = client['test-database']
+col = db['test-collection']
+
+mydict = {"informatics":{"doc_1": 5, "doc_3": 7}, "nice": {"doc_2": 5, "doc_4": 6}}
+
+#x = col.insert_one(mydict)
 
 #tokenize --> use algorithms
 #dbdicto
 def tokenize_each_file(parent: str):
 	"""Given a directory open each file within the given corpus and tokenize"""
-	c = 0
 	for folder in os.listdir(parent):
 		if folder.endswith(".json") or folder.endswith(".tsv"):
 			continue
@@ -41,6 +42,10 @@ def tokenize_each_file(parent: str):
 """tokenize
 INVIND[token] """
 if __name__ == "__main__":
-	print(client.list_database_names())
-	path = sys.argv[1]
+	#print(client.list_database_names())
+	#path = sys.argv[1]
+	path = "C:\\Users\\eduar\\121\\Assign3\\WEBPAGES_CLEAN"
 	tokenize_each_file(path)
+	tokens = col.find_one()
+	print(tokens["informatics"])
+	print(tokens["nice"])
