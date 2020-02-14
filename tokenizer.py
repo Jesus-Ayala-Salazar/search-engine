@@ -23,16 +23,47 @@ import math
 
 
 class Posting:
-	def __init__(self, doc_id):
-		self.doc_id = doc_id
-		self.freq = 0
-		self.tags = defaultdict(int)    # {tag: freq}
-		self.tf_idf = 0
-
+	#(self, *args, **kwargs):
+	#def __init__(self, doc_id):
+	def __init__(self, *args, **kwargs):
+		#if only one arg is given it is the doc_id
+		if len(args) == 0:
+			self.doc_id = args[0]
+			self.freq = 0
+			self.tags = defaultdict(int)    # {tag: freq}
+			self.tf_idf = 0
+		else: # if not one, then it must be 4, and in order it is doc_id,freq,tags,tf_idf
+			self.doc_id = args[0]
+			self.freq = args[1]
+			self.tags = args[2]
+			self.tf_idf = args[3]
+	
+	def get_doc_id():
+		return self.doc_id
+	def get_freq():
+		return self.freq
+	def get_tags():
+		return self.tags
+	def get_tf_idf:
+		return self.tf_idf
 	# for debugging
 	def __str__(self):
 		return f'doc id: {self.doc_id} | freq: {self.freq} | tags: {self.tags} | tf_idf: {self.tf_idf}'
-	
+
+### MUST ENCODE POSTING TO BE ABLE TO INPUT IT INTO THE DATABASE"
+def encode_Posting(post: Posting):
+	return {"_type": "Posting", "doc_id": post.get_doc_id(), "freq": post.get_freq(), "tags": post.get_tags(), "tf_idf": post.get_tf_idf()}
+
+### MUST DECODE FROM DOCUMENT
+def decode_Posting(document):
+	assert document["_type"] == "Posting"
+	return Posting(document["doc_id"], document["freq"], document["tags"], document["tf_idf"])
+
+#mydict = {"ics": {"doc_10": 10}}
+#mydict1 = {"yes": Posting("0/10")}
+
+#col.insert_one(mydict)
+#ol.insert_one(mydict1)
 
 def tokenize_each_file(filename: str,
 					   postings_dict: {str: [Posting]},
@@ -103,18 +134,18 @@ if __name__ == "__main__":
 
 	tokenize_each_file(path, postings_dict, num_tokens_dict)
 
-	# calculate tf-idf
+	 # calculate tf-idf
 	num_documents = len(num_tokens_dict)
 	for t in postings_dict:
-		for p in postings_dict[t]:
-			tf = p.freq / num_tokens_dict[p.doc_id]
-			idf = math.log(num_documents / len(postings_dict[t]), 10)
-			p.tf_idf = tf*idf
+	 	for p in postings_dict[t]:
+	 		tf = p.freq / num_tokens_dict[p.doc_id]
+	 		idf = math.log(num_documents / len(postings_dict[t]), 10)
+	 		p.tf_idf = tf*idf
 
-	# write postings to file
+	 # write postings to file
 	with open('postings.txt', 'w', encoding='utf8') as file:
 		for t in sorted(postings_dict):
-			file.write(f'{t}:\n')
-			for p in postings_dict[t]:
-				file.write(f'{str(p)}\n')
-			file.write('\n')
+	 		file.write(f'{t}:\n')
+	 		for p in postings_dict[t]:
+	 			file.write(f'{str(p)}\n')
+	 		file.write('\n')
