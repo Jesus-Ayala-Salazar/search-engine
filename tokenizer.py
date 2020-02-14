@@ -19,15 +19,19 @@ import math
 
 client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mongodb.net/test?retryWrites=true&w=majority") #connects to mongodb
 db = client['test-database'] #creates db
+###this for testing
 col = db['test-collection'] #creates Collection
 
+#### this should be ran when everything works.
+#sedb = client["se-database"]
+#collec = sedb["inv-collection"]
 
 class Posting:
 	#(self, *args, **kwargs):
 	#def __init__(self, doc_id):
 	def __init__(self, *args, **kwargs):
 		#if only one arg is given it is the doc_id
-		if len(args) == 0:
+		if len(args) == 1:
 			self.doc_id = args[0]
 			self.freq = 0
 			self.tags = defaultdict(int)    # {tag: freq}
@@ -59,6 +63,8 @@ def decode_Posting(document):
 	assert document["_type"] == "Posting"
 	return Posting(document["doc_id"], document["freq"], document["tags"], document["tf_idf"])
 
+def sort_tfID(post: Posting):
+	return post.get_tf_idf()
 #mydict = {"ics": {"doc_10": 10}}
 #mydict1 = {"yes": Posting("0/10")}
 
@@ -124,35 +130,46 @@ def tokenize_each_file(filename: str,
 
 
 if __name__ == "__main__":
-	p1 = Posting("0/8", 10, {"h1": 3, "title": 2}, 0.01)
-	p2 = Posting("1/8", 22, {"h1": 1, "title": 1}, 0.05)
-	p3 = Posting("2/8", 20, {"h1": 4, "title": 5}, 0.06)
-	mydict = {"ics": [encode_Posting(p1), encode_Posting(p2), encode_Posting(p3)], "informatics": [encode_Posting(p1), encode_Posting(p2), encode_Posting(p3)], "data": [encode_Posting(p1), encode_Posting(p2), encode_Posting(p3)]}
-	col.insert_one(mydict)
-	invi = col.find_one()
-	print(invi)
-	# path = sys.argv[1]
+	####testing
+	#p1 = Posting("0/8", 10, {"h1": 3, "title": 2}, 0.01)
+	#p2 = Posting("1/8", 22, {"h1": 1, "title": 1}, 0.05)
+	#p3 = Posting("2/8", 20, {"h1": 4, "title": 5}, 0.06)
+	#mydict = {"ics": [encode_Posting(p1), encode_Posting(p2), encode_Posting(p3)], "informatics": [encode_Posting(p1), encode_Posting(p2), encode_Posting(p3)], "data": [encode_Posting(p1), encode_Posting(p2), encode_Posting(p3)]}
+	#col.insert_one(mydict)
+	#invi = col.find_one()
+	#print(invi)
+	###END OF TESTING
+
+	path = sys.argv[1]
 
 	# # {token: [] of Postings}
-	# postings_dict = defaultdict(list)
+	postings_dict = defaultdict(list)
 
 	# # {doc_id: number of terms in document}
-	# num_tokens_dict = {}
+	num_tokens_dict = {}
 
-	# tokenize_each_file(path, postings_dict, num_tokens_dict)
+	tokenize_each_file(path, postings_dict, num_tokens_dict)
 
 	#  # calculate tf-idf
-	# num_documents = len(num_tokens_dict)
-	# for t in postings_dict:
-	#  	for p in postings_dict[t]:
-	#  		tf = p.freq / num_tokens_dict[p.doc_id]
-	#  		idf = math.log(num_documents / len(postings_dict[t]), 10)
-	#  		p.tf_idf = tf*idf
+	num_documents = len(num_tokens_dict)
+	for t in postings_dict:
+	 	for p in postings_dict[t]:
+	 		tf = p.freq / num_tokens_dict[p.doc_id]
+	 		idf = math.log(num_documents / len(postings_dict[t]), 10)
+	 		p.tf_idf = tf*idf
 
-	#  # write postings to file
-	# with open('postings.txt', 'w', encoding='utf8') as file:
-	# 	for t in sorted(postings_dict):
-	#  		file.write(f'{t}:\n')
-	#  		for p in postings_dict[t]:
-	#  			file.write(f'{str(p)}\n')
-	#  		file.write('\n')
+	#  # sort by tf-idf
+	#for t in postings_dict:
+	#	postings_dict[t].sort(key = sort_tfID, reverse = True)
+
+	#
+
+
+	 # write postings to file
+	with open('postings.txt', 'w', encoding='utf8') as file:
+		for t in sorted(postings_dict):
+	 		file.write(f'{t}:\n')
+	 		for p in postings_dict[t]:
+	 			file.write(f'{str(p)}\n')
+	 		file.write('\n')
+
