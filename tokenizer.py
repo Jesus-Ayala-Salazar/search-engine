@@ -17,9 +17,9 @@ import math
 
 #IDF(t) = log_e(Total number of documents / Number of documents with term t in it).
 
-#client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mongodb.net/test?retryWrites=true&w=majority") #connects to mongodb
-#db = client['test-database'] #creates db
-#col = db['test-collection'] #creates Collection
+client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mongodb.net/test?retryWrites=true&w=majority") #connects to mongodb
+db = client['test-database'] #creates db
+col = db['test-collection'] #creates Collection
 
 
 class Posting:
@@ -38,13 +38,13 @@ class Posting:
 			self.tags = args[2]
 			self.tf_idf = args[3]
 	
-	def get_doc_id():
+	def get_doc_id(self):
 		return self.doc_id
-	def get_freq():
+	def get_freq(self):
 		return self.freq
-	def get_tags():
+	def get_tags(self):
 		return self.tags
-	def get_tf_idf:
+	def get_tf_idf(self):
 		return self.tf_idf
 	# for debugging
 	def __str__(self):
@@ -124,28 +124,35 @@ def tokenize_each_file(filename: str,
 
 
 if __name__ == "__main__":
-	path = sys.argv[1]
+	p1 = Posting("0/8", 10, {"h1": 3, "title": 2}, 0.01)
+	p2 = Posting("1/8", 22, {"h1": 1, "title": 1}, 0.05)
+	p3 = Posting("2/8", 20, {"h1": 4, "title": 5}, 0.06)
+	mydict = {"ics": [encode_Posting(p1), encode_Posting(p2), encode_Posting(p3)], "informatics": [encode_Posting(p1), encode_Posting(p2), encode_Posting(p3)], "data": [encode_Posting(p1), encode_Posting(p2), encode_Posting(p3)]}
+	col.insert_one(mydict)
+	invi = col.find_one()
+	print(invi)
+	# path = sys.argv[1]
 
-	# {token: [] of Postings}
-	postings_dict = defaultdict(list)
+	# # {token: [] of Postings}
+	# postings_dict = defaultdict(list)
 
-	# {doc_id: number of terms in document}
-	num_tokens_dict = {}
+	# # {doc_id: number of terms in document}
+	# num_tokens_dict = {}
 
-	tokenize_each_file(path, postings_dict, num_tokens_dict)
+	# tokenize_each_file(path, postings_dict, num_tokens_dict)
 
-	 # calculate tf-idf
-	num_documents = len(num_tokens_dict)
-	for t in postings_dict:
-	 	for p in postings_dict[t]:
-	 		tf = p.freq / num_tokens_dict[p.doc_id]
-	 		idf = math.log(num_documents / len(postings_dict[t]), 10)
-	 		p.tf_idf = tf*idf
+	#  # calculate tf-idf
+	# num_documents = len(num_tokens_dict)
+	# for t in postings_dict:
+	#  	for p in postings_dict[t]:
+	#  		tf = p.freq / num_tokens_dict[p.doc_id]
+	#  		idf = math.log(num_documents / len(postings_dict[t]), 10)
+	#  		p.tf_idf = tf*idf
 
-	 # write postings to file
-	with open('postings.txt', 'w', encoding='utf8') as file:
-		for t in sorted(postings_dict):
-	 		file.write(f'{t}:\n')
-	 		for p in postings_dict[t]:
-	 			file.write(f'{str(p)}\n')
-	 		file.write('\n')
+	#  # write postings to file
+	# with open('postings.txt', 'w', encoding='utf8') as file:
+	# 	for t in sorted(postings_dict):
+	#  		file.write(f'{t}:\n')
+	#  		for p in postings_dict[t]:
+	#  			file.write(f'{str(p)}\n')
+	#  		file.write('\n')
