@@ -9,6 +9,17 @@ from nltk.probability import FreqDist
 from collections import defaultdict
 import pymongo
 
+from nltk.stem import WordNetLemmatizer
+from nltk.corpus import stopwords
+from string import punctuation
+import re
+
+
+
+# {token: {freq, [docIDs], tfIdf, [html tags]}}
+#IDF(t) = log_e(Total number of documents / Number of documents with term t in it).
+
+
 #client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mongodb.net/test?retryWrites=true&w=majority") #connects to mongodb
 #db = client['test-database'] #creates db
 #col = db['test-collection'] #creates Collection
@@ -47,10 +58,32 @@ def tokenize_each_file(filename: str):
 
 		# need to get frequency in doc, doc_id, tags the token appears in
 		with open(html_filename, 'rb') as html_file:
+			#html_file = "<html><title>Hello World</title> <h1>This is it</h1></html>"
 			soup = BeautifulSoup(html_file, 'lxml')
+			pageTitle = soup.title.text
+			pageH1 = soup.find_all('h1') 	#list
+			pageH2 = soup.find_all('h2')	#list
+			pageH3 = soup.find_all('h3') 	#list
+			pageH4 = soup.find_all('h4')	#list
+			pageH5 = soup.find_all('h5')	#list
+			pageH6 = soup.find_all('h6')	#list
+			print(pageH1)
+
+			# tokenize
 			token_list = nltk.word_tokenize(soup.get_text())
 			token_list = [t.lower() for t in token_list if t.isalnum() and len(t) > 1]
-			print(token_list)
+
+			# lemmatize
+			lemmatizer = WordNetLemmatizer()
+			#token_list = [lemmatizer.lemmatize(token) for token in token_list]
+			token_list = list()
+			tokenFrequency = defaultdict(int)
+			for token in token_list:
+				changedToken = lemmatizer.lemmatize(token)
+				tokenFrequency[changedToken] += 1
+				token_list.append(changedToken)
+
+
 		break
 
 
