@@ -87,6 +87,10 @@ def tokenize_each_file(filename: str,
 			# add total number of tokens to doc_id dictionary
 			num_tokens_dict[doc_id] = num_tokens
 
+			# progress file to see number of current documents indexed
+			with open('progress.txt', 'a', encoding='utf8') as file:
+				file.write(f'doc id: {doc_id} | num words: {num_tokens}\n')
+
 
 if __name__ == "__main__":
 	path = sys.argv[1]
