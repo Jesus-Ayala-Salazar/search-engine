@@ -9,16 +9,26 @@ from nltk.probability import FreqDist
 from collections import defaultdict
 import pymongo
 
-client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mongodb.net/test?retryWrites=true&w=majority") #connects to mongodb
-db = client['test-database'] #creates db
-col = db['test-collection'] #creates Collection
+#client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mongodb.net/test?retryWrites=true&w=majority") #connects to mongodb
+#db = client['test-database'] #creates db
+#col = db['test-collection'] #creates Collection
 
 # possible Posting structure
 class Posting:
-	def __init__(self):
-		self.doc_id = None
-		self.freq = 0
-		self.tags = []
+	def __init__(self, doc_id: str, f:int, tags: [str]):
+		self.doc_id = doc_id
+		self.freq = f
+		self.tags = tags
+		self.tf_idf = 0
+	def get_doc_id(self):
+		return self.doc_id
+	def get_freq(self):
+		return self.freq
+	def get_tags(self):
+		return self.tags
+	def add_freq(self):
+		self.freq +=1
+	
 
 
 def tokenize_each_file(filename: str):
