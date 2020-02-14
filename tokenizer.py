@@ -23,8 +23,7 @@ import re
 #client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mongodb.net/test?retryWrites=true&w=majority") #connects to mongodb
 #db = client['test-database'] #creates db
 #col = db['test-collection'] #creates Collection
-
-# possible Posting structure
+## possible Posting structure
 class Posting:
 	def __init__(self, doc_id: str, f:int, tags: [str]):
 		self.doc_id = doc_id
@@ -40,6 +39,7 @@ class Posting:
 	def add_freq(self):
 		self.freq +=1
 	
+#mydict = {"ics": Posting("0/8", 10, ["h1"])}
 
 
 def tokenize_each_file(filename: str):
@@ -98,8 +98,8 @@ def tokenize_each_file(filename: str):
 
 
 if __name__ == "__main__":
-	path = sys.argv[1]
-	tokenize_each_file(path)
-
+	#path = sys.argv[1]
+	#tokenize_each_file(path)
 	# "dictionary" file {token : [Posting]}
-	dict_postings = {}
+	#dict_postings = {}
+	print(mydict)
