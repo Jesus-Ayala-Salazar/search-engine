@@ -18,8 +18,8 @@ from string import ascii_letters, digits
 # client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mongodb.net/test?retryWrites=true&w=majority") #connects to mongodb
 
 # ### this should be ran when everything works.
-# sedb = client["test-database"]
-# collec = sedb["invertedIndex"]
+# db = client["test-database"]
+# collec = db["invertedIndex"]
 
 
 def map_pos_tag(tag: str) -> str:
