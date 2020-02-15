@@ -1,19 +1,19 @@
 import sys
 import os
 from bs4 import BeautifulSoup
-import lxml
-import json
 import nltk
-from nltk.probability import FreqDist
 from collections import defaultdict
 import pymongo
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
-from string import punctuation
-import re
 import math
 from model.Posting import Posting
-import inverter
+from inverter import createLocationDictionary
+from nltk.corpus import wordnet
+from string import ascii_letters, digits
+
+# for tokenization
+ENGLISH_CHARS = ascii_letters + digits
 
 
 # IDF(t) = log_e(Total number of documents / Number of documents with term t in it).
@@ -26,6 +26,32 @@ import inverter
 # ### this should be ran when everything works.
 # sedb = client["se-database"]
 # collec = sedb["inv-collection"]
+
+
+def map_pos_tag(tag: str) -> str:
+    """
+    maps from nltk pos tag schema to wordnet lemmatizer schema
+    nltk uses treebank pos tags found here: https://www.clips.uantwerpen.be/pages/MBSP-tags
+    modified from: https://stackoverflow.com/questions/15586721/wordnet-lemmatization-and-pos-tagging-in-python
+    """
+    if tag.startswith('J'):
+        return wordnet.ADJ
+    elif tag.startswith('V'):
+        return wordnet.VERB
+    elif tag.startswith('R'):
+        return wordnet.ADV
+    else:   # treat rest of tags as nouns
+        return wordnet.NOUN
+
+
+def isenglish(token: str) -> bool:
+    """
+    checks if token only contains characters in english alphabet or digits
+    """
+    for c in token:
+        if c not in ENGLISH_CHARS:
+            return False
+    return True
 
 
 # MUST ENCODE POSTING TO BE ABLE TO INPUT IT INTO THE DATABASE"
@@ -52,7 +78,7 @@ def tokenize_each_file(filename: str,
     """Given a directory open each file within the given corpus and tokenize"""
 
     # extract html identifiers from json file
-    data = inverter.createLocationDictionary(filename)
+    data = createLocationDictionary(filename)
 
     # get web pages directory
     dirname = os.path.dirname(filename)
@@ -66,7 +92,6 @@ def tokenize_each_file(filename: str,
             soup = BeautifulSoup(html_file, 'lxml')
             lemmatizer = WordNetLemmatizer()
             num_tokens = 0
-            # token_list = []
             # {token: single Posting}
             inner_dict = defaultdict(lambda: Posting(doc_id))
             important_tags = {'title','h1','h2','h3','h4','h5','h6','strong'}
@@ -74,22 +99,18 @@ def tokenize_each_file(filename: str,
             # for string in document
             for s in soup.strings:
                 # for token in string
-                for t in nltk.word_tokenize(s):
+                text = nltk.word_tokenize(s)
+                for t, tag in nltk.pos_tag(text):
                     # filtering
-                    if t.isalnum() and len(t) > 1 and t not in set(stopwords.words('english')):
+                    if isenglish(t) and len(t) > 1 and t not in set(stopwords.words('english')):
                         # add lemmatized token to list, increment frequency
-                        token = lemmatizer.lemmatize(t.lower())
+                        token = lemmatizer.lemmatize(t.lower(), map_pos_tag(tag))
                         num_tokens += 1
-                        # token_list.append(token)
                         inner_dict[token].freq += 1
 
                         # if token in important tags, add it
                         if s.parent.name in important_tags:
                             inner_dict[token].tags[s.parent.name] += 1
-
-            # prints all Postings in current document
-            # for t in inner_dict:
-            # 	print(f'{t}: {inner_dict[t]}\n')
 
             # add each Posting from current document to global dictionary
             for token in inner_dict:
@@ -99,8 +120,8 @@ def tokenize_each_file(filename: str,
             num_tokens_dict[doc_id] = num_tokens
 
             # progress file to see number of current documents indexed
-            with open('progress.txt', 'a', encoding='utf8') as file:
-                file.write(f'doc id: {doc_id} | num words: {num_tokens}\n')
+            # with open('progress.txt', 'a', encoding='utf8') as file:
+            #     file.write(f'doc id: {doc_id} | num words: {num_tokens}\n')
 
 
 if __name__ == "__main__":
