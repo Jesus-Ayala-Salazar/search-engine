@@ -4,20 +4,27 @@ from nltk.stem import WordNetLemmatizer
 import json
 import sys
 import os
+import pprint
 #nltk.download('wordnet')
 client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mongodb.net/test?retryWrites=true&w=majority") #connects to mongodb
 db = client['test-database'] #creates db
 col = db['invertedIndex'] #creates Collection
+#### TESTING INSERTS
+#token = {"token": "ics", "postings": [{"doc1": "10/10"}]}
+#token_list = {"token": "informatics", "postings": [{"doc1": "10/10"}]}, {"token": "stat", "postings": [{"doc2": "11/11"}]}
+#col.insert_one(token)
+#col.insert_many(token_list)
 
-invInd = col.find()
+
 lemmatizer = WordNetLemmatizer()
 def retrieve_token(query: str) -> []:
-	""" This function will take in a query of what the user wants to search for
-		lemmatize it, search it in the database of the inverted index and return the result"""
-	result = col.find({},{query:1})
-	# query = lemmatizer.lemmatize(query)
-	print("going to look for:", query)
-	return result
+    """ This function will take in a query of what the user wants to search for
+        lemmatize it, search it in the database of the inverted index and return the result"""
+    query = lemmatizer.lemmatize(query)
+
+    ## TODO FIX
+    #return invInd[query]
+    return None
 
 def retrieve_urls(postings: [dict], locationDictionary: dict) -> []:
 	""" Takes in a list of postings which are in dict format and will take that doc_ID retrieve 
@@ -48,7 +55,7 @@ def search_engine(locationDictionary: dict) -> None:
 	print("Please input any word to begin searching")
 	print("To exit, enter: !q")
 
-	
+	query = input("Search for: ")
 	while True:
 		query = input("Search for: ")
 		if query == "!q":
@@ -58,7 +65,7 @@ def search_engine(locationDictionary: dict) -> None:
 		if not queryExists(query):
 			print(".")
 			continue
-		postings = retrieve_token(query)
+		postings = retrieve_token(query) ##TODO
 		urls = retrieve_urls(postings, locationDictionary)
 		print_information(urls)
 		query = input("Search for: ")
@@ -87,17 +94,11 @@ def queryExists(query:str) -> bool:
 	return False
 
 if __name__ == "__main__":
-	
-	#print(invInd)
-	#x = retrieve_token("nice")
-	#print(x)
-	#print(retrieve_urls(x))
-	#print(lemmatizer.lemmatize("informatics"))
-	
+    # test = col.find_one({"token":"stat"})
+		# print(test['postings'])
+
 	path = sys.argv[1]
 	urlLocationDictionary = createLocationDictionary(path)
-	test = col.find_one({"token":"stat"})
-	print(test['postings'])
-	#search_engine(urlLocationDictionary)
+	search_engine(urlLocationDictionary)
 
 
