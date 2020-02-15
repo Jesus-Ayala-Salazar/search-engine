@@ -17,14 +17,15 @@ col = db['invertedIndex'] #creates Collection
 
 
 lemmatizer = WordNetLemmatizer()
-def retrieve_token(query: str) -> []:
-    """ This function will take in a query of what the user wants to search for
-        lemmatize it, search it in the database of the inverted index and return the result"""
-    query = lemmatizer.lemmatize(query)
-
-    ## TODO FIX
-    #return invInd[query]
-    return None
+def retrieve_postings(query: str) -> []:
+	""" This function will take in a query of what the user wants to search for
+			lemmatize it, search it in the database of the inverted index and return the result"""
+	dbDocument = col.find_one({"token":f"{query}"})
+	#print(f"postings for {query}:", dbDocument)
+	if dbDocument == None:
+		return []
+	postingsList = dbDocument['postings']
+	return postingsList
 
 def retrieve_urls(postings: [dict], locationDictionary: dict) -> []:
 	""" Takes in a list of postings which are in dict format and will take that doc_ID retrieve 
@@ -55,20 +56,22 @@ def search_engine(locationDictionary: dict) -> None:
 	print("Please input any word to begin searching")
 	print("To exit, enter: !q")
 
-	query = input("Search for: ")
+	
 	while True:
 		query = input("Search for: ")
 		if query == "!q":
 			break
 		query = lemmatizer.lemmatize(query)
 		# print("you entered:", query)
-		if not queryExists(query):
-			print(".")
+		# if not queryExists(query):
+		# 	print(".")
+		# 	continue
+		#print("query after lemmitzation:", query)
+		postings = retrieve_postings(query)
+		if postings == []:
 			continue
-		postings = retrieve_token(query) ##TODO
 		urls = retrieve_urls(postings, locationDictionary)
 		print_information(urls)
-		query = input("Search for: ")
 
 	return
 
