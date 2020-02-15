@@ -134,10 +134,20 @@ if __name__ == "__main__":
 	#for t in postings_dict:
 	#	postings_dict[t].sort(key = sort_tfID, reverse = True)
 
-	#
+	## encode postings into a dict to add to mongodb
 
+	# this dict will be added to db
+	encoded_posting = defaultdict(list)
 
+	#Copies posting_dict and encodes
+	for t in postings_dict:
+		for p in postings_dict:
+			encode_Posting[t].append(encode_Posting(p))
+
+	#  # insert into data base ran when we are done.
+	#collec.insert_one(encoded_posting)
 	 # write postings to file
+	
 	with open('postings.txt', 'w', encoding='utf8') as file:
 		for t in sorted(postings_dict):
 	 		file.write(f'{t}:\n')
