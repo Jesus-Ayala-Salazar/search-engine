@@ -13,24 +13,27 @@ from string import punctuation
 import re
 import math
 from model.Posting import Posting
+import inverter
 
 
-#IDF(t) = log_e(Total number of documents / Number of documents with term t in it).
+# IDF(t) = log_e(Total number of documents / Number of documents with term t in it).
+#
+# client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mongodb.net/test?retryWrites=true&w=majority") #connects to mongodb
+# db = client['test-database'] #creates db
+# ##this for testing
+# col = db['test-collection'] #creates Collection
 
-#client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mongodb.net/test?retryWrites=true&w=majority") #connects to mongodb
-#db = client['test-database'] #creates db
-###this for testing
-#col = db['test-collection'] #creates Collection
+# ### this should be ran when everything works.
+# sedb = client["se-database"]
+# collec = sedb["inv-collection"]
 
-#### this should be ran when everything works.
-#sedb = client["se-database"]
-#collec = sedb["inv-collection"]
 
-### MUST ENCODE POSTING TO BE ABLE TO INPUT IT INTO THE DATABASE"
+# MUST ENCODE POSTING TO BE ABLE TO INPUT IT INTO THE DATABASE"
 def encode_Posting(post: Posting):
     return {"_type": "Posting", "doc_id": post.get_doc_id(), "freq": post.get_freq(), "tags": post.get_tags(), "tf_idf": post.get_tf_idf()}
 
-### MUST DECODE FROM DOCUMENT
+
+# MUST DECODE FROM DOCUMENT
 def decode_Posting(document):
     assert document["_type"] == "Posting"
     return Posting(document["doc_id"], document["freq"], document["tags"], document["tf_idf"])
@@ -49,8 +52,7 @@ def tokenize_each_file(filename: str,
     """Given a directory open each file within the given corpus and tokenize"""
 
     # extract html identifiers from json file
-    with open(filename, 'r', encoding='utf8') as json_file:
-        data = json.load(json_file)
+    data = inverter.createLocationDictionary(filename)
 
     # get web pages directory
     dirname = os.path.dirname(filename)
@@ -102,15 +104,15 @@ def tokenize_each_file(filename: str,
 
 
 if __name__ == "__main__":
-    ####testing
-    #p1 = Posting("0/8", 10, {"h1": 3, "title": 2}, 0.01)
-    #p2 = Posting("1/8", 22, {"h1": 1, "title": 1}, 0.05)
-    #p3 = Posting("2/8", 20, {"h1": 4, "title": 5}, 0.06)
-    #mydict = {"ics": [encode_Posting(p1), encode_Posting(p2), encode_Posting(p3)], "informatics": [encode_Posting(p1), encode_Posting(p2), encode_Posting(p3)], "data": [encode_Posting(p1), encode_Posting(p2), encode_Posting(p3)]}
-    #col.insert_one(mydict)
-    #invi = col.find_one()
-    #print(invi)
-    ###END OF TESTING
+    # ###testing
+    # p1 = Posting("0/8", 10, {"h1": 3, "title": 2}, 0.01)
+    # p2 = Posting("1/8", 22, {"h1": 1, "title": 1}, 0.05)
+    # p3 = Posting("2/8", 20, {"h1": 4, "title": 5}, 0.06)
+    # mydict = {"ics": [encode_Posting(p1), encode_Posting(p2), encode_Posting(p3)], "informatics": [encode_Posting(p1), encode_Posting(p2), encode_Posting(p3)], "data": [encode_Posting(p1), encode_Posting(p2), encode_Posting(p3)]}
+    # col.insert_one(mydict)
+    # invi = col.find_one()
+    # print(invi)
+    # ##END OF TESTING
 
     path = sys.argv[1]
 
@@ -122,7 +124,7 @@ if __name__ == "__main__":
 
     tokenize_each_file(path, postings_dict, num_tokens_dict)
 
-    ## encode postings into a dict to add to mongodb
+    # # encode postings into a dict to add to mongodb
     # this dict will be added to db
     # {token: [] of encoded_Postings()}
     encoded_posting = defaultdict(list)
