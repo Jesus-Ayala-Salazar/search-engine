@@ -8,7 +8,13 @@ import pprint
 #nltk.download('wordnet')
 client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mongodb.net/test?retryWrites=true&w=majority") #connects to mongodb
 db = client['test-database'] #creates db
-col = db['test-collection'] #creates Collection
+col = db['invertedIndex'] #creates Collection
+#### TESTING INSERTS
+#token = {"token": "ics", "postings": [{"doc1": "10/10"}]}
+#token_list = {"token": "informatics", "postings": [{"doc1": "10/10"}]}, {"token": "stat", "postings": [{"doc2": "11/11"}]}
+#col.insert_one(token)
+#col.insert_many(token_list)
+
 
 lemmatizer = WordNetLemmatizer()
 def retrieve_token(query: str) -> []:
@@ -16,7 +22,9 @@ def retrieve_token(query: str) -> []:
         lemmatize it, search it in the database of the inverted index and return the result"""
     query = lemmatizer.lemmatize(query)
 
-    return invInd[query]
+    ## TODO FIX
+    #return invInd[query]
+    return None
 
 def retrieve_urls(postings: [dict], locationDictionary: dict) -> []:
     """ Takes in a list of postings which are in dict format and will take that doc_ID retrieve
@@ -49,9 +57,10 @@ def search_engine(locationDictionary: dict) -> None:
 
     query = input("Search for: ")
     while query != "!q":
-        postings = retrieve_token(query)
-        urls = retrieve_urls(postings, locationDictionary)
-        print_information(urls)
+        ##FIX TODO
+        #postings = retrieve_token(query) 
+        #urls = retrieve_urls(postings, locationDictionary)
+        #print_information(urls)
         query = input("Search for: ")
 
     return
@@ -68,29 +77,6 @@ def createLocationDictionary(filename: str) -> dict:
     return data
 
 if __name__ == "__main__":
-
-## FORMAT OF HOW TO INSERT AND HOW THE DOCUMENT LOOKS
-	#token = {"token": "ics", "postings": {"doc1": "10/10"}}
-	#tokens = collection.tokens
-	#token_id = tokens.insert_one(token).inserted_id
-	#print(db.list_collection_names())
-	#pprint.pprint(tokens.find_one())
-
-	#oken_list = {"token": "informatics", "postings": [{"doc1": "10/10"}]}, {"token": "stat", "postings": [{"doc2": "11/11"}]}
-	#result = tokens.insert_many(token_list)
-	### HOW TO FIND TOKEN IN DB
-	#for r in tokens.find({"token": query}):
-#		pprint.pprint(r["postings"])
-	#for i in col.find({},{query:1}):
-#	print(i)
-		# for t in i:
-		# 	print(t)
-    #print(invInd)
-    #x = retrieve_token("nice")
-    #print(x)
-    #print(retrieve_urls(x))
-    #print(lemmatizer.lemmatize("informatics"))
-
     path = sys.argv[1]
     urlLocationDictionary = createLocationDictionary(path)
 

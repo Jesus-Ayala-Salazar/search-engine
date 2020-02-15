@@ -19,20 +19,21 @@ import inverter
 # IDF(t) = log_e(Total number of documents / Number of documents with term t in it).
 #
 # client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mongodb.net/test?retryWrites=true&w=majority") #connects to mongodb
-# db = client['test-database'] #creates db
-# ##this for testing
-# col = db['test-collection'] #creates Collection
 
 # ### this should be ran when everything works.
-# sedb = client["invertedIndex"]
-# collec = sedb["inv-collection"]
+# sedb = client["test-database"]
+# collec = sedb["invertedIndex"]
 
 
 # MUST ENCODE POSTING TO BE ABLE TO INPUT IT INTO THE DATABASE"
 def encode_Posting(post: Posting):
     return {"_type": "Posting", "doc_id": post.get_doc_id(), "freq": post.get_freq(), "tags": post.get_tags(), "tf_idf": post.get_tf_idf()}
 
-
+def encode_each_Posting(postings: list):
+	result = []
+	for p in postings:
+		result.append(encode_Posting(p))
+	return result
 # MUST DECODE FROM DOCUMENT
 def decode_Posting(document):
     assert document["_type"] == "Posting"
@@ -145,9 +146,12 @@ if __name__ == "__main__":
                 encoded_posting[t].append(encode_Posting(p))
             file.write('\n')
 
-    # sort by tf-idf
-    # for t in postings_dict:
-    # postings_dict[t].sort(key = sort_tfID, reverse = True)
+    # sort by tf-idf 
+	# after it is sorted encode each posting associated with that token
+	# then make a dictionary that will pass it into the MongoDB
+    for t in postings_dict:
+    	postings_dict[t].sort(key = sort_tfID, reverse = True)
+		collec.insert_one({"token": t, "postings": encode_each_Posting(postings_dict[t])})
+		#collec.insert_one({"token": t, "Posting": encode_each_Posting(postings_dict[t])})
 
-    # # insert into data base ran when we are done.
-    # collec.insert_one(encoded_posting)
+
