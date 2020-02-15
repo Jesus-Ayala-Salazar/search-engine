@@ -12,9 +12,6 @@ from inverter import createLocationDictionary
 from nltk.corpus import wordnet
 from string import ascii_letters, digits
 
-# for tokenization
-ENGLISH_CHARS = ascii_letters + digits
-
 
 # IDF(t) = log_e(Total number of documents / Number of documents with term t in it).
 #
@@ -39,16 +36,6 @@ def map_pos_tag(tag: str) -> str:
         return wordnet.ADV
     else:   # treat rest of tags as nouns
         return wordnet.NOUN
-
-
-def isenglish(token: str) -> bool:
-    """
-    checks if token only contains characters in english alphabet or digits
-    """
-    for c in token:
-        if c not in ENGLISH_CHARS:
-            return False
-    return True
 
 
 # MUST ENCODE POSTING TO BE ABLE TO INPUT IT INTO THE DATABASE"
@@ -84,6 +71,8 @@ def tokenize_each_file(filename: str,
     # get web pages directory
     dirname = os.path.dirname(filename)
 
+    lemmatizer = WordNetLemmatizer()
+
     # iterate over each html file
     for doc_id in data:
         html_filename = os.path.join(dirname, doc_id)     # use '13/16' for html with title and body
@@ -91,7 +80,6 @@ def tokenize_each_file(filename: str,
         # need to get frequency in doc, doc_id, tags the token appears in
         with open(html_filename, 'rb') as html_file:
             soup = BeautifulSoup(html_file, 'lxml')
-            lemmatizer = WordNetLemmatizer()
             num_tokens = 0
             # {token: single Posting}
             inner_dict = defaultdict(lambda: Posting(doc_id))
@@ -103,7 +91,7 @@ def tokenize_each_file(filename: str,
                 text = nltk.word_tokenize(s)
                 for t, tag in nltk.pos_tag(text):
                     # filtering
-                    if isenglish(t) and len(t) > 1 and t not in set(stopwords.words('english')):
+                    if t.isascii() and len(t) > 1 and t not in set(stopwords.words('english')):
                         # add lemmatized token to list, increment frequency
                         token = lemmatizer.lemmatize(t.lower(), map_pos_tag(tag))
                         num_tokens += 1
