@@ -4,12 +4,12 @@ from nltk.stem import WordNetLemmatizer
 import json
 import sys
 import os
+import pprint
 #nltk.download('wordnet')
 client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mongodb.net/test?retryWrites=true&w=majority") #connects to mongodb
 db = client['test-database'] #creates db
 col = db['test-collection'] #creates Collection
 
-invInd = col.find_one()
 lemmatizer = WordNetLemmatizer()
 def retrieve_token(query: str) -> []:
     """ This function will take in a query of what the user wants to search for
@@ -69,6 +69,22 @@ def createLocationDictionary(filename: str) -> dict:
 
 if __name__ == "__main__":
 
+## FORMAT OF HOW TO INSERT AND HOW THE DOCUMENT LOOKS
+	#token = {"token": "ics", "postings": {"doc1": "10/10"}}
+	#tokens = collection.tokens
+	#token_id = tokens.insert_one(token).inserted_id
+	#print(db.list_collection_names())
+	#pprint.pprint(tokens.find_one())
+
+	#oken_list = {"token": "informatics", "postings": [{"doc1": "10/10"}]}, {"token": "stat", "postings": [{"doc2": "11/11"}]}
+	#result = tokens.insert_many(token_list)
+	### HOW TO FIND TOKEN IN DB
+	#for r in tokens.find({"token": query}):
+#		pprint.pprint(r["postings"])
+	#for i in col.find({},{query:1}):
+#	print(i)
+		# for t in i:
+		# 	print(t)
     #print(invInd)
     #x = retrieve_token("nice")
     #print(x)

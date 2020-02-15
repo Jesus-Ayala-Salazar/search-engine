@@ -24,7 +24,7 @@ import inverter
 # col = db['test-collection'] #creates Collection
 
 # ### this should be ran when everything works.
-# sedb = client["se-database"]
+# sedb = client["invertedIndex"]
 # collec = sedb["inv-collection"]
 
 
