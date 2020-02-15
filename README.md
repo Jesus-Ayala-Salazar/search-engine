@@ -1,6 +1,6 @@
 # Search_Engine
 
-TO-DO:
+### TO-DO:
 [] tokenize words
 [] use lemmitization
 [] inverter
