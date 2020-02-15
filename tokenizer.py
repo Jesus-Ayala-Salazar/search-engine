@@ -15,11 +15,11 @@ from string import ascii_letters, digits
 
 # IDF(t) = log_e(Total number of documents / Number of documents with term t in it).
 #
-# client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mongodb.net/test?retryWrites=true&w=majority") #connects to mongodb
+client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mongodb.net/test?retryWrites=true&w=majority") #connects to mongodb
 
 # ### this should be ran when everything works.
-# db = client["test-database"]
-# collec = db["invertedIndex"]
+db = client["test-database"]
+collec = db["invertedIndex"]
 
 
 def map_pos_tag(tag: str) -> str:
@@ -137,30 +137,39 @@ if __name__ == "__main__":
     # # encode postings into a dict to add to mongodb
     # this dict will be added to db
     # {token: [] of encoded_Postings()}
-    encoded_posting = defaultdict(list)
+    encoded_posting = defaultdict(list) #TODO: Delete this line
 
     # calculate tf-idf
     # copies posting_dict and encodes
     # write to postings.txt
     # all in same pass
+
+    # num_documents = len(num_tokens_dict)
+    # with open('postings.txt', 'w', encoding='utf8') as file:
+    #     for t in postings_dict:
+    #         file.write(f'{t}:\n')
+    #         for p in postings_dict[t]:
+    #             tf = p.freq / num_tokens_dict[p.doc_id]
+    #             idf = math.log(num_documents / len(postings_dict[t]), 10)
+    #             p.tf_idf = tf*idf
+    #             file.write(f'{str(p)}\n')
+    #             encoded_posting[t].append(encode_Posting(p))
+    #         file.write('\n')
+
     num_documents = len(num_tokens_dict)
-    with open('postings.txt', 'w', encoding='utf8') as file:
-        for t in postings_dict:
-            file.write(f'{t}:\n')
-            for p in postings_dict[t]:
-                tf = p.freq / num_tokens_dict[p.doc_id]
-                idf = math.log(num_documents / len(postings_dict[t]), 10)
-                p.tf_idf = tf*idf
-                file.write(f'{str(p)}\n')
-                encoded_posting[t].append(encode_Posting(p))
-            file.write('\n')
+    for t in postings_dict:
+        for p in postings_dict[t]:
+            tf = p.freq / num_tokens_dict[p.doc_id]
+            idf = math.log(num_documents / len(postings_dict[t]), 10)
+            p.tf_idf = tf*idf
+            # encoded_posting[t].append(encode_Posting(p))
 
     # sort by tf-idf 
 	# after it is sorted encode each posting associated with that token
 	# then make a dictionary that will pass it into the MongoDB
     for t in postings_dict:
     	postings_dict[t].sort(key = sort_tfID, reverse = True)
-		collec.insert_one({"token": t, "postings": encode_each_Posting(postings_dict[t])})
+        collec.insert_one({"token": t, "postings": encode_each_Posting(postings_dict[t])})
 		#collec.insert_one({"token": t, "Posting": encode_each_Posting(postings_dict[t])})
 
 
