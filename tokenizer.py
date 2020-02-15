@@ -89,7 +89,7 @@ def tokenize_each_file(filename: str,
 			# for t in inner_dict:
 			# 	print(f'{t}: {inner_dict[t]}\n')
 
-			# add each Posting from current document to global dictionary
+			# add each Posting from current document to global dictionary			
 			for token in inner_dict:
 				postings_dict[token].append(inner_dict[token])
 
@@ -124,11 +124,11 @@ if __name__ == "__main__":
 
 	#  # calculate tf-idf
 	num_documents = len(num_tokens_dict)
-	for t in postings_dict:
-	 	for p in postings_dict[t]:
-	 		tf = p.freq / num_tokens_dict[p.doc_id]
-	 		idf = math.log(num_documents / len(postings_dict[t]), 10)
-	 		p.tf_idf = tf*idf
+	for token in postings_dict:
+	 	for posting in postings_dict[token]:
+	 		tf = posting.freq / num_tokens_dict[posting.doc_id]
+	 		idf = math.log(num_documents / len(postings_dict[token]), 10)
+	 		posting.tf_idf = tf*idf
 
 	#  # sort by tf-idf
 	#for t in postings_dict:
