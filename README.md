@@ -1,8 +1,3 @@
----
-title: 'Project documentation template'
-disqus: hackmd
----
-
 Search Engine
 ===
 We are attempting to create a search engine that will go through a corpus of UC Irvine webpages.
