@@ -11,6 +11,7 @@ from model.Posting import Posting
 from inverter import createLocationDictionary
 from nltk.corpus import wordnet
 from string import ascii_letters, digits
+import datetime
 
 
 # IDF(t) = log_e(Total number of documents / Number of documents with term t in it).
@@ -72,7 +73,7 @@ def tokenize_each_file(filename: str,
     dirname = os.path.dirname(filename)
 
     lemmatizer = WordNetLemmatizer()
-
+    
     # iterate over each html file
     for doc_id in data:
         html_filename = os.path.join(dirname, doc_id)     # use '13/16' for html with title and body
@@ -111,6 +112,7 @@ def tokenize_each_file(filename: str,
             # progress file to see number of current documents indexed
             # with open('progress.txt', 'a', encoding='utf8') as file:
             #     file.write(f'doc id: {doc_id} | num words: {num_tokens}\n')
+            
 
 
 if __name__ == "__main__":
@@ -137,7 +139,7 @@ if __name__ == "__main__":
     # # encode postings into a dict to add to mongodb
     # this dict will be added to db
     # {token: [] of encoded_Postings()}
-    encoded_posting = defaultdict(list) #TODO: Delete this line
+    
 
     # calculate tf-idf
     # copies posting_dict and encodes
@@ -167,9 +169,21 @@ if __name__ == "__main__":
     # sort by tf-idf 
 	# after it is sorted encode each posting associated with that token
 	# then make a dictionary that will pass it into the MongoDB
+    insert_dict = []
+    count = 0
+    begin_time = datetime.datetime.now()
     for t in postings_dict:
-    	postings_dict[t].sort(key = sort_tfID, reverse = True)
-        collec.insert_one({"token": t, "postings": encode_each_Posting(postings_dict[t])})
-		#collec.insert_one({"token": t, "Posting": encode_each_Posting(postings_dict[t])})
+        postings_dict[t].sort(key = sort_tfID, reverse = True)
+    #     collec.insert_one({"token": t, "postings": encode_each_Posting(postings_dict[t])})
+        insert_dict.append({"token":t, "postings": encode_each_Posting(postings_dict[t])})
+        if count % 50000 == 0:
+            print(f"count: {count}")
+        count += 1
+    print("done sorting and appending to insert_dict")
+    print("inserting into db")
+    #collec.insert_many(insert_dict)
+    print("done inserting into db")
 
-
+    end_time = datetime.datetime.now()
+    print("Time of commencement:", begin_time)
+    print("Time of finished insertion: ", end_time)
