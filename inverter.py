@@ -17,16 +17,24 @@ col = db['invertedIndex'] #creates Collection
 
 
 lemmatizer = WordNetLemmatizer()
-def retrieve_postings(query: str) -> []:
+def retrieve_postings(list_query: [str]) -> [dict]:
 	""" This function will take in a query of what the user wants to search for
-			lemmatize it, search it in the database of the inverted index and return the result"""
-	dbDocument = col.find_one({"token":f"{query}"})
+			search it in the database of the inverted index and return the result"""
+	#list_query = query.split()
+	dbDocuments = [] #[dict]
+	for q in list_query:
+		dbDocument = col.find_one({"token":f"{q.lower()}"})
+		if dbDocument != None:
+			dbDocuments.extend(dbDocument['postings']) ##we lose token in this case
 	#print(f"postings for {query}:", dbDocument)
-	if dbDocument == None:
-		return []
-	postingsList = dbDocument['postings']
-	return postingsList
+	#if dbDocument == None:
+	#	return []
+	#postingsList = dbDocument['postings']
+	return dbDocuments
 
+def posting_tdidf(p:dict):
+	""" Used to sort the postings by td_idf"""
+	return p["tf_idf"]
 def retrieve_urls(postings: [dict], locationDictionary: dict) -> []:
 	""" Takes in a list of postings which are in dict format and will take that doc_ID retrieve 
 		each URLS in order and return it in a list"""
@@ -34,18 +42,26 @@ def retrieve_urls(postings: [dict], locationDictionary: dict) -> []:
 	#print(doc_ID)
 	
 	urlResultList = []
+	#print(postings)
+	postings.sort(key=posting_tdidf, reverse = True)
 	for posting in postings:
 		folderLocation = posting["doc_id"]
 		urlResultList.append(locationDictionary[folderLocation])
+	# for posting in postings:
+	# 	folderLocation = posting["doc_id"]
+	# 	urlResultList.append(locationDictionary[folderLocation])
 		
-
+	urlResultList = list(dict.fromkeys(urlResultList))
 	return urlResultList
 
 def print_information(urls: list) -> None:
 	"""prints out the list of urls"""
 	print("\n_______________________URL RESULTS_______________________")
+	count = 0
 	for url in urls:
-		print(url)
+		if count <20:
+			print(url)
+		count +=1
 	print("_________________________________________________________\n")
 
 	return
@@ -61,13 +77,22 @@ def search_engine(locationDictionary: dict) -> None:
 		query = input("Search for: ")
 		if query == "!q":
 			break
-		query = lemmatizer.lemmatize(query)
+		### LEMMATIZE EACH WORD IN QUERY
+		queries  = query.split() # split the query to get each word
+		for i in range(len(queries)):
+			queries[i] = lemmatizer.lemmatize(queries[i]) #for each word lemmatize and modify the list
+
+
+		#query = lemmatizer.lemmatize(query)
 		# print("you entered:", query)
 		# if not queryExists(query):
 		# 	print(".")
 		# 	continue
 		#print("query after lemmitzation:", query)
-		postings = retrieve_postings(query)
+
+		#pass in the query as a list of queries
+		#returns a list of dictionaries, each query is called by find_one 
+		postings = retrieve_postings(queries)
 		if postings == []:
 			continue
 		urls = retrieve_urls(postings, locationDictionary)

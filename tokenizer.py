@@ -164,6 +164,7 @@ if __name__ == "__main__":
             tf = p.freq / num_tokens_dict[p.doc_id]
             idf = math.log(num_documents / len(postings_dict[t]), 10)
             p.tf_idf = tf*idf
+            
             # encoded_posting[t].append(encode_Posting(p))
 
     # sort by tf-idf 
