@@ -67,7 +67,7 @@ def tokenize_each_file(filename: str,
     """Given a directory open each file within the given corpus and tokenize"""
 
     # extract html identifiers from json file
-    data = createLocationDictionary(filename)
+    data = createLocationDictionary(filename) ##{"folder/file" : "URL"}
 
     # get web pages directory
     dirname = os.path.dirname(filename)
@@ -83,7 +83,7 @@ def tokenize_each_file(filename: str,
             soup = BeautifulSoup(html_file, 'lxml')
             num_tokens = 0
             # {token: single Posting}
-            inner_dict = defaultdict(lambda: Posting(doc_id))
+            inner_dict = defaultdict(lambda: Posting(doc_id)) #{"token": Posting(frequency_in_document, tags)}
             important_tags = {'title','h1','h2','h3','h4','h5','h6','strong'}
 
             # for string in document
