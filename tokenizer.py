@@ -43,10 +43,13 @@ def map_pos_tag(tag: str) -> str:
 def encode_Posting(post: Posting):
     return {"_type": "Posting", "doc_id": post.get_doc_id(), "freq": post.get_freq(), "tags": post.get_tags(), "tf_idf": post.get_tf_idf()}
 
-def encode_each_Posting(postings: list):
-	result = []
+def encode_each_Posting(postings: set): ->dict
+	#result = []
+    result = defaultdict(float)
+
 	for p in postings:
-		result.append(encode_Posting(p))
+        result[p.doc_id] = p.tf_idf
+		#result.append(encode_Posting(p))
 	return result
 # MUST DECODE FROM DOCUMENT
 def decode_Posting(document):

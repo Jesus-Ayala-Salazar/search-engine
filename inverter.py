@@ -31,8 +31,9 @@ def retrieve_postings(list_query: [str]) -> [dict]:
 	#	return []
 	#postingsList = dbDocument['postings']
 	return dbDocuments
-
-def posting_tdidf(p:dict):
+def calc_query_tfidf(query:str):
+	
+def posting_tfidf(p:dict):
 	""" Used to sort the postings by td_idf"""
 	return p["tf_idf"]
 def retrieve_urls(postings: [dict], locationDictionary: dict) -> []:
@@ -43,7 +44,7 @@ def retrieve_urls(postings: [dict], locationDictionary: dict) -> []:
 	
 	urlResultList = []
 	#print(postings)
-	postings.sort(key=posting_tdidf, reverse = True)
+	postings.sort(key=posting_tfidf, reverse = True)
 	for posting in postings:
 		folderLocation = posting["doc_id"]
 		urlResultList.append(locationDictionary[folderLocation])
@@ -78,7 +79,7 @@ def search_engine(locationDictionary: dict) -> None:
 		if query == "!q":
 			break
 		### LEMMATIZE EACH WORD IN QUERY
-		queries  = query.split() # split the query to get each word
+		queries  = nltk.word_tokenize(query) # split the query to get each word
 		for i in range(len(queries)):
 			queries[i] = lemmatizer.lemmatize(queries[i]) #for each word lemmatize and modify the list
 
