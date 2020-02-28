@@ -9,6 +9,9 @@ import pprint
 client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mongodb.net/test?retryWrites=true&w=majority") #connects to mongodb
 db = client['test-database'] #creates db
 col = db['invertedIndex'] #creates Collection
+#col2 = db["test-collection"]
+#test_coss = [{"token": "dog", "postings":{"d2": 1.2, "d3" : 1.23, "d1": 0.12}}, {"token": "cat", "postings": {"d1": 0, "d2": 0.2, "d3": 1.2}}]
+#col2.insert_many(test_coss)
 #### TESTING INSERTS
 #token = {"token": "ics", "postings": [{"doc1": "10/10"}]}
 #token_list = {"token": "informatics", "postings": [{"doc1": "10/10"}]}, {"token": "stat", "postings": [{"doc2": "11/11"}]}
@@ -32,6 +35,7 @@ def retrieve_postings(list_query: [str]) -> [dict]:
 	#postingsList = dbDocument['postings']
 	return dbDocuments
 def calc_query_tfidf(query:str):
+	return None
 	
 def posting_tfidf(p:dict):
 	""" Used to sort the postings by td_idf"""
