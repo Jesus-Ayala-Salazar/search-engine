@@ -47,23 +47,29 @@ def calc_weight(freq_dict: dict) -> int:
     plain: 1, strong: 8, h3-h6: 1, h1-h2: 6, anchor: 8, title: 4
     based on: https://www.usenix.org/legacy/publications/library/proceedings/usits97/full_papers/cutler/cutler.pdf
     """
-    WEIGHT_FACTOR = {'plain': 1, 'strong': 8, 'h3-h6': 1, 'h1-h2': 6, 'a': 8, 'title': 4}
+    WEIGHT_FACTOR = {'plain': 1, 'strong': 8, 'h3-h6': 1, 'h1-h2': 6, 'anchor': 8, 'title': 4}
     weight = 0
     for tag in freq_dict:
         weight += freq_dict[tag] * WEIGHT_FACTOR[tag]
     return weight
 
 
+# MUST ENCODE POSTING TO BE ABLE TO INPUT IT INTO THE DATABASE"
+def encode_Posting(post: Posting):
+    return {"_type": "Posting", "doc_id": post.get_doc_id(), "freq": post.get_freq(), "tags": post.get_tags(), "tf_idf": post.get_tf_idf()}
 
 def encode_each_Posting(postings: set):
-    #result = []
+	#result = []
     result = defaultdict(float)
 
     for p in postings:
         result[p.doc_id] = p.tf_idf
-        #result.append(encode_Posting(p))
-    return result
-
+		#result.append(encode_Posting(p))
+	return result
+# MUST DECODE FROM DOCUMENT
+def decode_Posting(document):
+    assert document["_type"] == "Posting"
+    return Posting(document["doc_id"], document["freq"], document["tags"], document["tf_idf"])
 
 def sort_tfID(post: Posting):
     return post.get_tf_idf()
@@ -109,6 +115,7 @@ def tokenize_each_file(filename: str,
                         # add lemmatized token to list, increment frequency
                         token = lemmatizer.lemmatize(t.lower(), map_pos_tag(tag))
                         num_tokens += 1
+                        single_posting_dict[token].freq += 1
 
                         # if token in important tags, add it
                         if s.parent.name in {'h1', 'h2'}:
@@ -163,12 +170,6 @@ if __name__ == "__main__":
 
     tokenize_each_file(path, postings_dict, num_tokens_dict)
 
-    end_time_of_tokenizing = datetime.datetime.now()
-    print("end tokenizing")
-
-    print("Time of commencement (TOKENIZATION):", begin_time_of_tokenizing)
-    print("Time of finish (TOKENIZATION):", end_time_of_tokenizing)
-
     # {token: idf}
     idf_dict = {}
 
@@ -220,15 +221,13 @@ if __name__ == "__main__":
         insert_length_dict.append({"doc_id": doc_id, "length": length_dict[doc_id]})
     lengthCollec.insert_many(insert_length_dict)
     # sort by tf-idf 
-    # after it is sorted encode each posting associated with that token
-    # then make a dictionary that will pass it into the MongoDB
+	# after it is sorted encode each posting associated with that token
+	# then make a dictionary that will pass it into the MongoDB
     insert_dict = []
     count = 0
-
-    print("begin sorting and DB insertion")
-    begin_time_of_DB_insertion = datetime.datetime.now()
+    begin_time = datetime.datetime.now()
     for t in postings_dict:
-        # postings_dict[t].sort(key = sort_tfID, reverse = True)
+        postings_dict[t].sort(key = sort_tfID, reverse = True)
     #     collec.insert_one({"token": t, "postings": encode_each_Posting(postings_dict[t])})
         insert_dict.append({"token":t, "postings": encode_each_Posting(postings_dict[t]), 'idf': idf_dict[t]}
                            )
@@ -236,13 +235,12 @@ if __name__ == "__main__":
             print(f"count: {count}")
         count += 1
 
-
+    print("done sorting and appending to insert_dict")
+    print("inserting into db")
     collecTest.insert_many(insert_dict)
     #collec.insert_many(insert_dict)
-    print("end sorting and DB insertion")
-    end_time_of_DB_insertion = datetime.datetime.now()
+    print("done inserting into db")
 
-    print("Time of commencement (INSERTION):", begin_time_of_DB_insertion)
-    print("Time of finish (INSERTION): ", end_time_of_DB_insertion)
-    print()
-
+    end_time = datetime.datetime.now()
+    print("Time of commencement:", begin_time)
+    print("Time of finished insertion: ", end_time)

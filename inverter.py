@@ -15,6 +15,7 @@ db = client['test-database'] #creates db
 # col = db['invertedIndex'] #creates Collection
 col = db['firstTestIndex']
 lengthCol = db['lengthCollec']
+lemmatizer = WordNetLemmatizer()
 
 #col2 = db["test-collection"]
 #test_coss = [{"token": "dog", "postings":{"d2": 1.2, "d3" : 1.23, "d1": 0.12}}, {"token": "cat", "postings": {"d1": 0, "d2": 0.2, "d3": 1.2}}]
@@ -40,7 +41,7 @@ def map_pos_tag(tag: str) -> str:
     else:   # treat rest of tags as nouns
         return wordnet.NOUN
 
-lemmatizer = WordNetLemmatizer()
+
 def retrieve_postings(dict_query: {str:float}) -> [dict]:
     """ This function will take in a query of what the user wants to search for
             search it in the database of the inverted index and return the result"""
@@ -78,6 +79,7 @@ def posting_tfidf(p:dict):
     """ Used to sort the postings by td_idf"""
     return p["tf_idf"]
 def retrieve_urls(postings: [dict], locationDictionary: dict) -> []:
+
     """ Takes in a list of postings which are in dict format and will take that doc_ID retrieve
         each URLS in order and return it in a list"""
         ##TODO: retrieve the actual URLS, retrievable from the bookkeeping json file
@@ -92,6 +94,7 @@ def retrieve_urls(postings: [dict], locationDictionary: dict) -> []:
     # 	urlResultList.append(locationDictionary[folderLocation])
     return urlResultList
 
+
 def print_information(urls: list) -> None:
     """prints out the list of urls"""
     print("\n_______________________URL RESULTS_______________________")
@@ -105,6 +108,7 @@ def print_information(urls: list) -> None:
     return
 
 def search_engine(locationDictionary: dict) -> None:
+
     """asks the user to input a query and displays the list of urls that contains the word"""
     print("Welcome to our search engine")
     print("Please input any word to begin searching")
@@ -138,6 +142,7 @@ def search_engine(locationDictionary: dict) -> None:
         print_information(urls)
 
     return
+
 
 def createLocationDictionary(filename: str) -> dict:
     '''
