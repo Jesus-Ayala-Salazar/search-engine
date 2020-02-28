@@ -143,6 +143,25 @@ def search_engine(locationDictionary: dict) -> None:
 
     return
 
+def obtainRelevantPages(query, locationDictionary) -> list:
+    query = nltk.word_tokenize(query)
+    token_freq = defaultdict(int)
+    for t, tag in nltk.pos_tag(query):
+        # filtering
+        if t.isascii() and len(t) > 1 and t not in set(stopwords.words('english')):
+            # add lemmatized token to list, increment frequency
+            token = lemmatizer.lemmatize(t.lower(), map_pos_tag(tag))
+            token_freq[token] += 1
+    query_tfidf = defaultdict(float) #dict of each token to its tfidf
+    for token in token_freq:
+        db_doc = col.find_one({"token": token})
+        if db_doc == None:
+            pass # do some error handling if token isn't found in database
+        query_tfidf[token] = token_freq[token]*db_doc["idf"]
+    postings = retrieve_postings(query_tfidf)
+    
+    urls = retrieve_urls(postings, locationDictionary)
+    return urls
 
 def createLocationDictionary(filename: str) -> dict:
     '''
