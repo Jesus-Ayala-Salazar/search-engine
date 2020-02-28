@@ -31,7 +31,7 @@ def retrieve_postings(list_query: [str]) -> [dict]:
 	#	return []
 	#postingsList = dbDocument['postings']
 	return dbDocuments
-def calc_query_tfidf(query:str):
+
 	
 def posting_tfidf(p:dict):
 	""" Used to sort the postings by td_idf"""

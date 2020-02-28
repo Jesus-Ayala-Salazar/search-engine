@@ -38,16 +38,29 @@ def map_pos_tag(tag: str) -> str:
     else:   # treat rest of tags as nouns
         return wordnet.NOUN
 
+def calc_weight(freq_dict: dict) -> int:
+    """
+    calculates and returns weighted term frequency of a token in a document
+    html tag classes and weights:
+    plain: 1, strong: 8, h3-h6: 1, h1-h2: 6, anchor: 8, title: 4
+    based on: https://www.usenix.org/legacy/publications/library/proceedings/usits97/full_papers/cutler/cutler.pdf
+    """
+    WEIGHT_FACTOR = {'plain': 1, 'strong': 8, 'h3-h6': 1, 'h1-h2': 6, 'anchor': 8, 'title': 4}
+    weight = 0
+    for tag in freq_dict:
+        weight += freq_dict[tag] * WEIGHT_FACTOR[tag]
+    return weight
+
 
 # MUST ENCODE POSTING TO BE ABLE TO INPUT IT INTO THE DATABASE"
 def encode_Posting(post: Posting):
     return {"_type": "Posting", "doc_id": post.get_doc_id(), "freq": post.get_freq(), "tags": post.get_tags(), "tf_idf": post.get_tf_idf()}
 
-def encode_each_Posting(postings: set): ->dict
+def encode_each_Posting(postings: set):
 	#result = []
     result = defaultdict(float)
 
-	for p in postings:
+    for p in postings:
         result[p.doc_id] = p.tf_idf
 		#result.append(encode_Posting(p))
 	return result
@@ -65,7 +78,7 @@ def sort_tfID(post: Posting):
 #ol.insert_one(mydict1)
 
 def tokenize_each_file(filename: str,
-                       postings_dict: {str: [Posting]},
+                       postings_dict: {str: {Posting}},
                        num_tokens_dict: {str: int}):
     """Given a directory open each file within the given corpus and tokenize"""
 
@@ -86,8 +99,10 @@ def tokenize_each_file(filename: str,
             soup = BeautifulSoup(html_file, 'lxml')
             num_tokens = 0
             # {token: single Posting}
-            inner_dict = defaultdict(lambda: Posting(doc_id))
-            important_tags = {'title','h1','h2','h3','h4','h5','h6','strong'}
+            single_posting_dict = defaultdict(lambda: Posting(doc_id))
+            important_tags = {'title','h1','h2','h3','h4','h5','h6','strong','a'}
+
+            #
 
             # for string in document
             for s in soup.strings:
@@ -99,18 +114,29 @@ def tokenize_each_file(filename: str,
                         # add lemmatized token to list, increment frequency
                         token = lemmatizer.lemmatize(t.lower(), map_pos_tag(tag))
                         num_tokens += 1
-                        inner_dict[token].freq += 1
+                        single_posting_dict[token].freq += 1
 
                         # if token in important tags, add it
-                        if s.parent.name in important_tags:
-                            inner_dict[token].tags[s.parent.name] += 1
+                        if s.parent.name in {'h1', 'h2'}:
+                            single_posting_dict[token].tags['h1-h2'] += 1
+                        elif s.parent.name in {'h3','h4','h5','h6'}:
+                            single_posting_dict[token].tags['h3-h6'] += 1
+                        elif s.parent.name == 'title':
+                            single_posting_dict[token].tags['title'] += 1
+                        elif s.parent.name == 'a':
+                            single_posting_dict[token].tags['a'] += 1
+                        elif s.parent.name == 'strong':
+                            single_posting_dict[token].tags['strong'] += 1
+                        else:
+                            single_posting_dict[token].tags['plain'] += 1
 
             # add each Posting from current document to global dictionary
-            for token in inner_dict:
-                postings_dict[token].append(inner_dict[token])
+            for token in single_posting_dict:
+                postings_dict[token].add(single_posting_dict[token])
 
-            # add total number of tokens to doc_id dictionary
-            num_tokens_dict[doc_id] = num_tokens
+            # add total number of tokens to doc_id dictionary if not zero
+            if num_tokens:
+                num_tokens_dict[doc_id] = num_tokens
 
             # progress file to see number of current documents indexed
             # with open('progress.txt', 'a', encoding='utf8') as file:
@@ -131,13 +157,20 @@ if __name__ == "__main__":
 
     path = sys.argv[1]
 
-    # # {token: [] of Postings}
-    postings_dict = defaultdict(list)
+    # # {token: set of Postings}
+    postings_dict = defaultdict(set)
 
     # # {doc_id: number of terms in document}
     num_tokens_dict = {}
 
     tokenize_each_file(path, postings_dict, num_tokens_dict)
+
+    # {token: idf}
+    idf_dict = {}
+
+    # {doc_id: length}
+    # include mongo {"doc_id":docid, "length" : length}]
+    length_dict = defaultdict(float)
 
     # # encode postings into a dict to add to mongodb
     # this dict will be added to db
@@ -162,13 +195,23 @@ if __name__ == "__main__":
     #         file.write('\n')
 
     num_documents = len(num_tokens_dict)
-    for t in postings_dict:
-        for p in postings_dict[t]:
-            tf = p.freq / num_tokens_dict[p.doc_id]
-            idf = math.log(num_documents / len(postings_dict[t]), 10)
-            p.tf_idf = tf*idf
+    for token in postings_dict:
+        # calculate idf
+        idf = math.log(num_documents / len(postings_dict[token]), 10)
+        idf_dict[token] = idf
+
+        for posting in postings_dict[token]:
+            posting.weight = calc_weight(posting.tags)
+            tf = 1 + math.log(posting.weight, 10)
+            posting.tf_idf = tf*idf
+            length_dict[posting.doc_id] += posting.tf_idf ** 2
+
             
             # encoded_posting[t].append(encode_Posting(p))
+
+    # calculate the square root
+    for doc_id in length_dict:
+        length_dict[doc_id] = math.sqrt(length_dict[doc_id])
 
     # sort by tf-idf 
 	# after it is sorted encode each posting associated with that token
@@ -179,7 +222,7 @@ if __name__ == "__main__":
     for t in postings_dict:
         postings_dict[t].sort(key = sort_tfID, reverse = True)
     #     collec.insert_one({"token": t, "postings": encode_each_Posting(postings_dict[t])})
-        insert_dict.append({"token":t, "postings": encode_each_Posting(postings_dict[t])})
+        insert_dict.append({"token":t, "postings": encode_each_Posting(postings_dict[t]), 'idf': idf_dict[t]})
         if count % 50000 == 0:
             print(f"count: {count}")
         count += 1
