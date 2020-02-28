@@ -8,7 +8,10 @@ import pprint
 #nltk.download('wordnet')
 client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mongodb.net/test?retryWrites=true&w=majority") #connects to mongodb
 db = client['test-database'] #creates db
-col = db['invertedIndex'] #creates Collection
+#col = db['invertedIndex'] #creates Collection
+### USE THESE TWO FOR TESTING ON 0FOLDER
+lengthCol = db["lengthCollec"]
+testCol = db["firstTestIndex"]
 #col2 = db["test-collection"]
 #test_coss = [{"token": "dog", "postings":{"d2": 1.2, "d3" : 1.23, "d1": 0.12}}, {"token": "cat", "postings": {"d1": 0, "d2": 0.2, "d3": 1.2}}]
 #col2.insert_many(test_coss)
@@ -26,7 +29,9 @@ def retrieve_postings(list_query: [str]) -> [dict]:
 	#list_query = query.split()
 	dbDocuments = [] #[dict]
 	for q in list_query:
-		dbDocument = col.find_one({"token":f"{q.lower()}"})
+		#dbDocument = col.find_one({"token":f"{q.lower()}"})
+		dbDocument = testCol.find_one({"token":f"{q.lower()}"})
+		#lengthdoc = lengthCol.find_one({"doc_id": "0/18"})
 		if dbDocument != None:
 			dbDocuments.extend(dbDocument['postings']) ##we lose token in this case
 	#print(f"postings for {query}:", dbDocument)
@@ -85,6 +90,7 @@ def search_engine(locationDictionary: dict) -> None:
 			break
 		### LEMMATIZE EACH WORD IN QUERY
 		queries  = nltk.word_tokenize(query) # split the query to get each word
+
 		for i in range(len(queries)):
 			queries[i] = lemmatizer.lemmatize(queries[i]) #for each word lemmatize and modify the list
 
