@@ -83,7 +83,7 @@ def tokenize_each_file(filename: str,
     """Given a directory open each file within the given corpus and tokenize"""
 
     # extract html identifiers from json file
-    data = createLocationDictionary(filename)
+    data = createLocationDictionary(filename) ##{"folder/file" : "URL"}
 
     # get web pages directory
     dirname = os.path.dirname(filename)
@@ -99,10 +99,9 @@ def tokenize_each_file(filename: str,
             soup = BeautifulSoup(html_file, 'lxml')
             num_tokens = 0
             # {token: single Posting}
+
             single_posting_dict = defaultdict(lambda: Posting(doc_id))
             important_tags = {'title','h1','h2','h3','h4','h5','h6','strong','a'}
-
-            #
 
             # for string in document
             for s in soup.strings:
@@ -222,7 +221,8 @@ if __name__ == "__main__":
     for t in postings_dict:
         postings_dict[t].sort(key = sort_tfID, reverse = True)
     #     collec.insert_one({"token": t, "postings": encode_each_Posting(postings_dict[t])})
-        insert_dict.append({"token":t, "postings": encode_each_Posting(postings_dict[t]), 'idf': idf_dict[t]})
+        insert_dict.append({"token":t, "postings": encode_each_Posting(postings_dict[t]), 'idf': idf_dict[t]}
+                           )
         if count % 50000 == 0:
             print(f"count: {count}")
         count += 1
