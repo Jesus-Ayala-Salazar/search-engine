@@ -167,6 +167,8 @@ if __name__ == "__main__":
             tf = p.freq / num_tokens_dict[p.doc_id]
             idf = math.log(num_documents / len(postings_dict[t]), 10)
             p.tf_idf = tf*idf
+
+
             
             # encoded_posting[t].append(encode_Posting(p))
 
@@ -179,7 +181,7 @@ if __name__ == "__main__":
     for t in postings_dict:
         postings_dict[t].sort(key = sort_tfID, reverse = True)
     #     collec.insert_one({"token": t, "postings": encode_each_Posting(postings_dict[t])})
-        insert_dict.append({"token":t, "postings": encode_each_Posting(postings_dict[t])})
+        insert_dict.append({"token":t, "postings": encode_each_Posting(postings_dict[t]), "idf": idf_dict[t]})
         if count % 50000 == 0:
             print(f"count: {count}")
         count += 1
