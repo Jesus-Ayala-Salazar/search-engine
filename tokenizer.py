@@ -20,7 +20,9 @@ client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mong
 
 # ### this should be ran when everything works.
 db = client["test-database"]
-collec = db["invertedIndex"]
+#collec = db["invertedIndex"]
+collecTest = db["firstTestIndex"]
+lengthCollec = db["lengthCollec"]
 
 
 def map_pos_tag(tag: str) -> str:
@@ -209,9 +211,11 @@ if __name__ == "__main__":
             # encoded_posting[t].append(encode_Posting(p))
 
     # calculate the square root
+    insert_length_dict =[]
     for doc_id in length_dict:
         length_dict[doc_id] = math.sqrt(length_dict[doc_id])
-
+        insert_length_dict.append({"doc_id": doc_id, "length": length_dict[doc_id]})
+    lengthCollec.insert_many(insert_length_dict)
     # sort by tf-idf 
 	# after it is sorted encode each posting associated with that token
 	# then make a dictionary that will pass it into the MongoDB
@@ -226,8 +230,10 @@ if __name__ == "__main__":
         if count % 50000 == 0:
             print(f"count: {count}")
         count += 1
+
     print("done sorting and appending to insert_dict")
     print("inserting into db")
+    collecTest.insert_many(insert_dict)
     #collec.insert_many(insert_dict)
     print("done inserting into db")
 
