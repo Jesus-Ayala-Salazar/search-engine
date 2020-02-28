@@ -159,7 +159,7 @@ if __name__ == "__main__":
 
 
     begin_time_of_tokenizing = datetime.datetime.now()
-    print("run tokenizing:")
+    print("run tokenizing")
 
     tokenize_each_file(path, postings_dict, num_tokens_dict)
 
@@ -213,8 +213,8 @@ if __name__ == "__main__":
             
             # encoded_posting[t].append(encode_Posting(p))
 
-    # calculate the square root
-    insert_length_dict =[]
+    # calculate the square root and insert into a data structure for DB insertion
+    insert_length_dict =[] #data structure for DB insertion
     for doc_id in length_dict:
         length_dict[doc_id] = math.sqrt(length_dict[doc_id])
         insert_length_dict.append({"doc_id": doc_id, "length": length_dict[doc_id]})
