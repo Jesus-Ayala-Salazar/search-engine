@@ -81,7 +81,7 @@ def tokenize_file(dirname, doc_id, lemmatizer) -> {str: Posting}:
         if not title:
             title = ''
         else:
-            title = title.get_text()
+            title = title.get_text()[:100]
 
         # get first paragraph
         first_p = soup.find('p')
