@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for
 import sys
 sys.path.append('../')
-import inverter
+import querying
 app = Flask(__name__)
 
 @app.route('/results', methods = ['GET', 'POST'])
@@ -24,14 +24,14 @@ def index():
 
 def retrieveURLs(query: str) -> list:
     '''Function takes in a query and goes to the backend to obtain the relevant pages '''
-    listOfURLS = inverter.obtainRelevantPages(query)
+    listOfURLS = querying.obtainRelevantPages(query)
     return listOfURLS
 
 def buildResultList(listOfURLS: list):
     '''function creates the required data structure necessary (of the results) for the template rendering'''
     result = []
     for URL in listOfURLS:
-        result.append(("Header", URL, "Lorem ipsum dolor sit amet, ea eum nisl magna, qui mazim laudem ei. Commodo aperiam abhorreant id vim"))
+        result.append(("Header", URL, "Lorem ipsum dolor sit amet, ea eum nisl magna, qui mazim laudem ei. Commodo aperiam abhorreant id vimLorem ipsum dolor sit amet, ea eum nisl magna, qui mazim laudem ei. Commodo aperiam abhorreant id vimLorem ipsum dolor sit amet, ea eum nisl magna, qui mazim laudem ei. Commodo aperiam abhorreant id vim"))
     return result
 
 if __name__ == '__main__':
