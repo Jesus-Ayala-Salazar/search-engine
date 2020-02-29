@@ -3,8 +3,6 @@ import sys
 sys.path.append('../')
 import inverter
 app = Flask(__name__)
-path = "C:\\Users\\Francisco\\Desktop\\CS 121\\Assignment3\\webpages\\WEBPAGES_RAW\\bookkeeping.json"
-urlLocationDictionary = inverter.createLocationDictionary(path)
 
 @app.route('/results', methods = ['GET', 'POST'])
 def results():
@@ -25,7 +23,8 @@ def index():
     return render_template('index.html')
 
 def retrieveURLs(query: str) -> list:
-    listOfURLS = inverter.obtainRelevantPages(query, urlLocationDictionary)
+    '''Function takes in a query and goes to the backend to obtain the relevant pages '''
+    listOfURLS = inverter.obtainRelevantPages(query)
     return listOfURLS
 
 def buildResultList(listOfURLS: list):
