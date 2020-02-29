@@ -19,7 +19,7 @@ import json
 client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mongodb.net/test?retryWrites=true&w=majority") #connects to mongodb
 
 # initialize appropriate collections from MongoDB
-db = client["test-database"]
+db = client["engine-database"]
 collecTest = db["invertedIndex"]
 lengthCollec = db["lengthCollec"]
 
