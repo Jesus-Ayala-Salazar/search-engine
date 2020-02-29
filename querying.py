@@ -79,8 +79,8 @@ def retrieve_urls(document_ids: [str]) -> []:
 
     for doc_id in document_ids:
         doc_db = lengthCol.find_one({"doc_id":doc_id})
-        url = doc_db["url"]
-        urlResultList.append(url)
+        url_info = (doc_db["title"],doc_db["url"],doc_db["first-p"])
+        urlResultList.append(url_info)
     
     return urlResultList
 
