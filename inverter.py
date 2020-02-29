@@ -16,8 +16,8 @@ client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mong
 db = client['test-database'] #Connects to the database where our inverted index is located
 # col = db['invertedIndex'] #Connects to the collection where our inverted index is stored
 ## TODO CHANGE THE COLLECTION NAME
-col = db['firstTestIndex']
-lengthCol = db['lengthCollec'] #Connects to a collection that contains the document_ID along with its length and URL
+col = db['secondTestIndex']
+lengthCol = db['lengthCollec-2'] #Connects to a collection that contains the document_ID along with its length and URL
 lemmatizer = WordNetLemmatizer() #Used to lemmatize the query in order to match the process in the tokenizer
 
 
@@ -70,14 +70,17 @@ def cos_similarity(dict_query: {str:float}) -> [dict]:
     return sorted(cosine_scores, key=lambda x: cosine_scores[x], reverse=True)
 
 
-def retrieve_urls(document_ids: [str], locationDictionary: dict) -> []:
+def retrieve_urls(document_ids: [str]) -> []:
 
     """ Takes in a list of document IDS that are already sorted and will take that doc_ID retrieve
         each URLS in order from the Database and return it in a list"""
     #build a list of urls
     urlResultList = []
+
     for doc_id in document_ids:
-        urlResultList.append(locationDictionary[doc_id]) #TODO: ##RETRIEVE FROM DATABASE NOT FILE
+        doc_db = lengthCol.find_one({"doc_id":doc_id})
+        url = doc_db["url"]
+        urlResultList.append(url) #TODO: ##RETRIEVE FROM DATABASE NOT FILE
     
     return urlResultList
 
@@ -114,7 +117,7 @@ def calculate_querytdf_idf(query:[str]) -> {}:
             query_tfidf[token] = token_freq[token]*db_doc["idf"]
     return query_tfidf
 
-def search_engine(locationDictionary: dict) -> None:
+def search_engine() -> None:
 
     """asks the user to input a query and displays the list of urls that contains the word"""
     print("Welcome to our search engine")
@@ -136,7 +139,7 @@ def search_engine(locationDictionary: dict) -> None:
         postings = cos_similarity(query_tfidf)
         if postings == []:
             continue
-        urls = retrieve_urls(postings, locationDictionary)
+        urls = retrieve_urls(postings)
         print_information(urls)
 
     return
@@ -159,7 +162,7 @@ def obtainRelevantPages(query, locationDictionary) -> list:
         query_tfidf[token] = token_freq[token]*db_doc["idf"]
     postings = cos_similarity(query_tfidf)
     
-    urls = retrieve_urls(postings, locationDictionary)
+    urls = retrieve_urls(postings)
     return urls
 
 ## DELETE
@@ -187,8 +190,8 @@ def queryExists(query:str) -> bool:
 
 if __name__ == "__main__":
 
-    path = sys.argv[1]
-    urlLocationDictionary = createLocationDictionary(path)
-    search_engine(urlLocationDictionary)
+    #path = sys.argv[1]
+    #urlLocationDictionary = createLocationDictionary(path)
+    search_engine()
 
 
