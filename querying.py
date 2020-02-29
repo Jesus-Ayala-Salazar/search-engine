@@ -14,8 +14,8 @@ from nltk.corpus import wordnet
 ### CONNECTS TO CLIENT MONGODB
 client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mongodb.net/test?retryWrites=true&w=majority") #connects to mongodb
 db = client['engine-database'] #Connects to the database where our inverted index is located
-col = db['invertedIndex']
-lengthCol = db['lengthCollec'] #Connects to a collection that contains the document_ID along with its length and URL
+col = db['test-01']
+lengthCol = db['test-length-01'] #Connects to a collection that contains the document_ID along with its length and URL
 lemmatizer = WordNetLemmatizer() #Used to lemmatize the query in order to match the process in the tokenizer
 
 
@@ -42,11 +42,11 @@ def cos_similarity(dict_query: {str:float}) -> [dict]:
     cosine_scores = defaultdict(float) ##a dictionary where the key is doc_id and value is its score
     length_doc = defaultdict(float) ### dictionary of the coressponding doc that have the query.
     for q in dict_query:
-        dbDocument = col.find_one({"token":f"{q}"}) #retrieve the document of the query/term
-        tfidf_dict = dbDocument['postings'] #retrieve its postings in form {doc_id:td-idf}
-        for doc_id in tfidf_dict: 
+        tfidf_list = col.find_one({"token":f"{q}"})['postings'][:100] #retrieve the document of the query/term
+                                                                     #retrieve its postings in form {doc_id:td-idf}
+        for doc_id,tf_idf in tfidf_list: 
             # calculates dot product
-            cosine_scores[doc_id] += dict_query[q] * tfidf_dict[doc_id] #build cosine_scores by dot product
+            cosine_scores[doc_id] += dict_query[q] * tf_idf #build cosine_scores by dot product
             length_doc[doc_id] = lengthCol.find_one({"doc_id":doc_id})["length"] # get the length of each doc_id that we come across
     # calculate query magnitude/length
     query_magnitude = 0 ##calculate length of query ||query||
