@@ -64,7 +64,7 @@ def cos_similarity(dict_query: {str:float}) -> [dict]:
     # sort by cosine score increasing
     # list of doc_ids sorted by decreasing cosine score
 
-    ## TESTING DELETE FOR FINAL TURN IN
+    ## TESTING; DELETE FOR FINAL TURN IN
     # for k in sorted(cosine_scores, key=lambda x: cosine_scores[x], reverse=True):
     #      print(f'{k} : {cosine_scores[k]}')
     return sorted(cosine_scores, key=lambda x: cosine_scores[x], reverse=True)
@@ -144,7 +144,7 @@ def search_engine() -> None:
 
     return
 
-## USED FOR GUI??
+## USED FOR GUI!
 def obtainRelevantPages(query) -> list:
     #use same format when creating the indexer to get same results
     query = nltk.word_tokenize(query)
@@ -156,18 +156,6 @@ def obtainRelevantPages(query) -> list:
     urls = retrieve_urls(postings)
     
     return urls
-
-## DELETE
-def createLocationDictionary(filename: str) -> dict:
-    '''
-    Reads the bookkeeping.json file and returns a dictionary corresponding to a folder/file
-    and what it's url is.
-        key 	== folder/file (Str)
-        value	== url (Str)
-    '''
-    with open(filename, 'r', encoding='utf8') as json_file:
-        data = json.load(json_file)
-    return data
 
  
 def queryExists(query:str) -> bool:
@@ -183,7 +171,6 @@ def queryExists(query:str) -> bool:
 if __name__ == "__main__":
 
     #path = sys.argv[1]
-    #urlLocationDictionary = createLocationDictionary(path)
     search_engine()
 
 
