@@ -20,9 +20,8 @@ client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mong
 
 # initialize appropriate collections from MongoDB
 db = client["test-database"]
-#collec = db["invertedIndex"]
-collecTest = db["secondTestIndex"]
-lengthCollec = db["lengthCollec-2"]
+collecTest = db["invertedIndex"]
+lengthCollec = db["lengthCollec"]
 
 
 def map_pos_tag(tag: str) -> str:
