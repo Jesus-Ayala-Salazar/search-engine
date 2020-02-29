@@ -80,7 +80,7 @@ def retrieve_urls(document_ids: [str]) -> []:
     for doc_id in document_ids:
         doc_db = lengthCol.find_one({"doc_id":doc_id})
         url = doc_db["url"]
-        urlResultList.append(url) #TODO: ##RETRIEVE FROM DATABASE NOT FILE
+        urlResultList.append(url)
     
     return urlResultList
 
@@ -117,6 +117,7 @@ def calculate_querytdf_idf(query:[str]) -> {}:
             query_tfidf[token] = token_freq[token]*db_doc["idf"]
     return query_tfidf
 
+#For Non-GUI querying
 def search_engine() -> None:
 
     """asks the user to input a query and displays the list of urls that contains the word"""
@@ -146,9 +147,7 @@ def search_engine() -> None:
 
 ## USED FOR GUI!
 def obtainRelevantPages(query) -> list:
-    #use same format when creating the indexer to get same results
-    query = nltk.word_tokenize(query)
-    
+    query = nltk.word_tokenize(query)    
     query_tfidf = calculate_querytdf_idf(query)
 
     #RETRIEVE THE DOC_IDS IN ORDER by using cos sim
