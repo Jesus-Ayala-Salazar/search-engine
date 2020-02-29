@@ -8,9 +8,9 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 import math
 from model.Posting import Posting
-from inverter import createLocationDictionary
 from nltk.corpus import wordnet
 import datetime
+import json
 
 
 # IDF(t) = log_e(Total number of documents / Number of documents with term t in it).
@@ -77,6 +77,21 @@ def tokenize_file(dirname, doc_id, lemmatizer) -> {str: Posting}:
     # create soup object to parse for text
     with open(html_filename, 'rb') as html_file:
         soup = BeautifulSoup(html_file, 'lxml')
+        # get title
+        title = soup.find('title')
+        if not title:
+            title = ''
+        else:
+            title = title.get_text()
+
+        # get first paragraph
+        first_p = soup.find('p')
+        if not first_p:
+            first_p = ''
+        else:
+            first_p = first_p.get_text()[:280]
+
+
 
     # {token: single Posting}
     single_posting_dict = defaultdict(lambda: Posting(doc_id))
@@ -94,6 +109,11 @@ def tokenize_file(dirname, doc_id, lemmatizer) -> {str: Posting}:
 
                 increment_tags(token, s.parent.name, single_posting_dict)
 
+    # check if single_posting_dict has valid tokens
+    #  if yes, add it to length_dict
+    if single_posting_dict:
+        length_dict[doc_id].append(title)
+        length_dict[doc_id].append(first_p)
     return single_posting_dict
 
 def increment_tags(token, tag, single_posting_dict):
@@ -114,7 +134,7 @@ def increment_tags(token, tag, single_posting_dict):
         single_posting_dict[token].tags['plain'] += 1
 
 
-def create_postings_dict(data: {str: str}, filename: str, postings_dict: {str: {Posting}}):
+def create_postings_dict(data: {str: str}, filename: str, postings_dict: {str: {Posting}}, length_dict: {str: (float, str, str)}):
     """
     creates an inverted index consisting of tokens mapped to a set of its
       Postings
@@ -143,6 +163,16 @@ def create_postings_dict(data: {str: str}, filename: str, postings_dict: {str: {
     return num_documents
 
             
+def createLocationDictionary(filename: str) -> dict:
+    '''
+    Reads the bookkeeping.json file and returns a dictionary corresponding to a folder/file
+    and what it's url is.
+        key 	== folder/file (Str)
+        value	== url (Str)
+    '''
+    with open(filename, 'r', encoding='utf8') as json_file:
+        data = json.load(json_file)
+    return data
 
 if __name__ == "__main__":
     # get absolute path to url index file bookkeeping.json
@@ -152,22 +182,30 @@ if __name__ == "__main__":
     # {token: set of Postings}
     postings_dict = defaultdict(set)
 
-    begin_time_of_tokenizing = datetime.datetime.now()
-    print("run tokenizing")
 
     # extract html identifiers from json file
     data = createLocationDictionary(path)  # {"folder/file" : "URL"}
 
+    # {doc_id: [H1, first-paragraph, length]}
+    length_dict = defaultdict(list)
+
+    begin_time_of_tokenizing = datetime.datetime.now()
+    print("run tokenizing")
+
     # keeps track of total documents with valid tokens
     # used for calculating idf of each token
-    num_documents = create_postings_dict(data, path, postings_dict)
+    num_documents = create_postings_dict(data, path, postings_dict, length_dict)
+
+    print("finish tokenizing")
+    end_time_of_tokenizing = datetime.datetime.now()
+
+    print("Time of commencement (TOKENIZING):", begin_time_of_tokenizing)
+    print("Time finish(TOKENIZING): ", end_time_of_tokenizing)
+
 
     # {token: idf}
     idf_dict = {}
 
-    # {doc_id: length}
-    # include mongo {"doc_id":docid, "length" : length}]
-    length_dict = defaultdict(float)
 
     for token in postings_dict:
         # calculate idf
@@ -178,20 +216,25 @@ if __name__ == "__main__":
             posting.weight = calculate_weight(posting.tags)
             tf = 1 + math.log(posting.weight, 10)
             posting.tf_idf = tf*idf
-            length_dict[posting.doc_id] += posting.tf_idf ** 2
+            # check
+            if len(length_dict[posting.doc_id]) == 2:
+                length_dict[posting.doc_id].append(0.0)
+            length_dict[posting.doc_id][2] += posting.tf_idf ** 2
 
 
     # calculate the square root and insert into a data structure for DB insertion
     insert_length_dict =[] #data structure for DB insertion
     for doc_id in length_dict:
-        length_dict[doc_id] = math.sqrt(length_dict[doc_id])
-        insert_length_dict.append({"doc_id": doc_id, "length": length_dict[doc_id], 'url': data[doc_id]})
+        # get html file H1 and
+        length_dict[doc_id][2] = math.sqrt(length_dict[doc_id][2])
+        insert_length_dict.append({"doc_id": doc_id, "length": length_dict[doc_id][2], 'title': length_dict[doc_id][0], 'first-p': length_dict[doc_id][1], 'url': data[doc_id]})
     lengthCollec.insert_many(insert_length_dict)
     # sort by tf-idf 
     # after it is sorted encode each posting associated with that token
     # then make a dictionary that will pass it into the MongoDB
     insert_dict = []
     count = 0
+    print("begin sorting, appending to dict, and inserting into DB")
     begin_time = datetime.datetime.now()
     for t in postings_dict:
     #     collec.insert_one({"token": t, "postings": encode_each_Posting(postings_dict[t])})
@@ -200,12 +243,12 @@ if __name__ == "__main__":
             print(f"count: {count}")
         count += 1
 
-    print("done sorting and appending to insert_dict")
-    print("inserting into db")
     collecTest.insert_many(insert_dict)
     #collec.insert_many(insert_dict)
-    print("done inserting into db")
 
     end_time = datetime.datetime.now()
-    print("Time of commencement:", begin_time)
-    print("Time of finished insertion: ", end_time)
+    print("END sorting, appending to dict, and inserting into DB")
+
+    print("Time of commencement (INSERTION):", begin_time)
+    print("Time finish(INSERTION): ", end_time)
+
