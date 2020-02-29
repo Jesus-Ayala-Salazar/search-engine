@@ -40,20 +40,28 @@ def map_pos_tag(tag: str) -> str:
         return wordnet.NOUN
 
 
-def calculate_weight(freq_dict: {str: int}) -> int:
+def calculate_weight(tf_idf: float, freq_dict:{str:int}) -> int:
     """
     calculates and returns weighted term frequency of a token in a document
     html tag classes and weights:
     plain: 1, strong: 8, h3-h6: 1, h1-h2: 6, anchor: 8, title: 4
     based on: https://www.usenix.org/legacy/publications/library/proceedings/usits97/full_papers/cutler/cutler.pdf
     """
-    WEIGHT_FACTOR = {'plain': 1, 'strong': 8, 'h3-h6': 1, 'h1-h2': 6, 'a': 8, 'title': 4}
+    WEIGHT_FACTOR = {'strong': 4, 'h3-h6': 1, 'h1-h2': 3, 'a': 4, 'title': 2}
     weight = 0
     for tag in freq_dict:
-        weight += freq_dict[tag] * WEIGHT_FACTOR[tag]
+        for freq in freq_dict[tag]:
+            weight += tf_idf+WEIGHT_FACTOR[tag]
     return weight
 
-
+def calculate_tf(freq_dict: {str: int}) -> int:
+    """
+    calculates total freq of each document
+    """
+    result = 0
+    for tag in freq_dict:
+        result += freq_dict[tag]
+    return result #TF
 def encode_posting(postings: set) -> {str: float}:
     """
     returns dictionary of form: {doc_id: tf_idf} where keys and values are
@@ -212,9 +220,10 @@ if __name__ == "__main__":
         idf_dict[token] = idf
 
         for posting in postings_dict[token]:
-            posting.weight = calculate_weight(posting.tags)
-            tf = 1 + math.log(posting.weight, 10)
+            #posting.weight = calculate_weight(posting.tags)
+            tf = 1 + math.log(calculate_tf(posting.tags), 10)
             posting.tf_idf = tf*idf
+            posting.tf_idf = calculate_weight(posting.tf_idf,posting.tags)
             # check
             if len(length_dict[posting.doc_id]) == 2:
                 length_dict[posting.doc_id].append(0.0)
@@ -237,6 +246,7 @@ if __name__ == "__main__":
     begin_time = datetime.datetime.now()
     for t in postings_dict:
     #     collec.insert_one({"token": t, "postings": encode_each_Posting(postings_dict[t])})
+
         insert_dict.append({"token":t, "postings": encode_posting(postings_dict[t]), 'idf': idf_dict[t]})
         if count % 50000 == 0:
             print(f"count: {count}")
