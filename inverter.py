@@ -37,7 +37,7 @@ def map_pos_tag(tag: str) -> str:
         return wordnet.NOUN
 
 
-def retrieve_postings(dict_query: {str:float}) -> [dict]:
+def cos_similarity(dict_query: {str:float}) -> [dict]:
     """ Takes in a dictionary of query where the Key: Term in query and 
     	Value:td_idf of the query it performs cosSimilarity and returns scores sorted"""
 
@@ -94,6 +94,26 @@ def print_information(urls: list) -> None:
 
     return
 
+def calculate_querytdf_idf(query:[str]) -> {}:
+    """ takes in a list of terms and returns a dict with its weight associated"""
+    token_freq = defaultdict(int) ## Used to calculate the weight of each term in query
+    for t, tag in nltk.pos_tag(query):
+        # filtering
+        if t.isascii() and len(t) > 1 and t not in set(stopwords.words('english')):
+            # add lemmatized token to list, increment frequency
+            token = lemmatizer.lemmatize(t.lower(), map_pos_tag(tag))
+            token_freq[token] += 1
+
+    query_tfidf = defaultdict(float) #dict of each token to its tfidf
+    for token in token_freq:
+        if queryExists(token):
+            db_doc = col.find_one({"token": token}) #Retrieve the token and its idf to calc its tf_idf
+            ##DELETE BUT KEEP FOR NOW FOR TESTING
+            ##print(f'token: {token} ')
+            # calcualte td_idf of query
+            query_tfidf[token] = token_freq[token]*db_doc["idf"]
+    return query_tfidf
+
 def search_engine(locationDictionary: dict) -> None:
 
     """asks the user to input a query and displays the list of urls that contains the word"""
@@ -109,25 +129,11 @@ def search_engine(locationDictionary: dict) -> None:
         ### LEMMATIZE EACH TERM IN QUERY
         #use same format when creating the indexer to get same results
         query = nltk.word_tokenize(query)
-        token_freq = defaultdict(int) ## Used to calculate the weight of each term in query
-        for t, tag in nltk.pos_tag(query):
-            # filtering
-            if t.isascii() and len(t) > 1 and t not in set(stopwords.words('english')):
-                # add lemmatized token to list, increment frequency
-                token = lemmatizer.lemmatize(t.lower(), map_pos_tag(tag))
-                token_freq[token] += 1
-
-        query_tfidf = defaultdict(float) #dict of each token to its tfidf
-        for token in token_freq:
-            if queryExists(token):
-                db_doc = col.find_one({"token": token}) #Retrieve the token and its idf to calc its tf_idf
-                ##DELETE BUT KEEP FOR NOW FOR TESTING
-                ##print(f'token: {token} ')
-                # calcualte td_idf of query
-                query_tfidf[token] = token_freq[token]*db_doc["idf"]
+        
+        query_tfidf = calculate_querytdf_idf(query)
 
         #RETRIEVE THE DOC_IDS IN ORDER by using cos sim
-        postings = retrieve_postings(query_tfidf)
+        postings = cos_similarity(query_tfidf)
         if postings == []:
             continue
         urls = retrieve_urls(postings, locationDictionary)
@@ -151,7 +157,7 @@ def obtainRelevantPages(query, locationDictionary) -> list:
         if db_doc == None:
             pass # do some error handling if token isn't found in database
         query_tfidf[token] = token_freq[token]*db_doc["idf"]
-    postings = retrieve_postings(query_tfidf)
+    postings = cos_similarity(query_tfidf)
     
     urls = retrieve_urls(postings, locationDictionary)
     return urls
