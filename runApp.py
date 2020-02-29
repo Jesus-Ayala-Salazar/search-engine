@@ -27,12 +27,6 @@ def retrieveURLs(query: str) -> list:
     listOfURLS = querying.obtainRelevantPages(query)
     return listOfURLS
 
-# def buildResultList(listOfURLS: list):
-#     '''function creates the required data structure necessary (of the results) for the template rendering'''
-#     result = []
-#     for URL in listOfURLS:
-#         result.append(("Header", URL, "Lorem ipsum dolor sit amet, ea eum nisl magna, qui mazim laudem ei. Commodo aperiam abhorreant id vimLorem ipsum dolor sit amet, ea eum nisl magna, qui mazim laudem ei. Commodo aperiam abhorreant id vimLorem ipsum dolor sit amet, ea eum nisl magna, qui mazim laudem ei. Commodo aperiam abhorreant id vim"))
-#     return result
 
 if __name__ == '__main__':
     app.run(debug = True)
