@@ -9,22 +9,17 @@ import pprint
 from collections import defaultdict
 from nltk.corpus import stopwords
 from nltk.corpus import wordnet
-#nltk.download('wordnet')
-client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mongodb.net/test?retryWrites=true&w=majority") #connects to mongodb
-db = client['test-database'] #creates db
-# col = db['invertedIndex'] #creates Collection
-col = db['firstTestIndex']
-lengthCol = db['lengthCollec']
-lemmatizer = WordNetLemmatizer()
+#nltk.download('wordnet') ##this downloads just once to put it in your PC
 
-#col2 = db["test-collection"]
-#test_coss = [{"token": "dog", "postings":{"d2": 1.2, "d3" : 1.23, "d1": 0.12}}, {"token": "cat", "postings": {"d1": 0, "d2": 0.2, "d3": 1.2}}]
-#col2.insert_many(test_coss)
-#### TESTING INSERTS
-#token = {"token": "ics", "postings": [{"doc1": "10/10"}]}
-#token_list = {"token": "informatics", "postings": [{"doc1": "10/10"}]}, {"token": "stat", "postings": [{"doc2": "11/11"}]}
-#col.insert_one(token)
-#col.insert_many(token_list)
+### CONNECTS TO CLIENT MONGODB
+client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mongodb.net/test?retryWrites=true&w=majority") #connects to mongodb
+db = client['test-database'] #Connects to the database where our inverted index is located
+# col = db['invertedIndex'] #Connects to the collection where our inverted index is stored
+## TODO CHANGE THE COLLECTION NAME
+col = db['firstTestIndex']
+lengthCol = db['lengthCollec'] #Connects to a collection that contains the document_ID along with its length and URL
+lemmatizer = WordNetLemmatizer() #Used to lemmatize the query in order to match the process in the tokenizer
+
 
 def map_pos_tag(tag: str) -> str:
     """
@@ -42,56 +37,48 @@ def map_pos_tag(tag: str) -> str:
         return wordnet.NOUN
 
 
-def retrieve_postings(dict_query: {str:float}) -> [dict]:
-    """ This function will take in a query of what the user wants to search for
-            search it in the database of the inverted index and return the result"""
-    #list_query = query.split()
-    cosine_scores = defaultdict(float)
-    length_doc = defaultdict(float)
+def cos_similarity(dict_query: {str:float}) -> [dict]:
+    """ Takes in a dictionary of query where the Key: Term in query and 
+    	Value:td_idf of the query it performs cosSimilarity and returns scores sorted"""
+
+    cosine_scores = defaultdict(float) ##a dictionary where the key is doc_id and value is its score
+    length_doc = defaultdict(float) ### dictionary of the coressponding doc that have the query.
     for q in dict_query:
-        dbDocument = col.find_one({"token":f"{q.lower()}"})
-        tfidf_dict = dbDocument['postings']
-        for doc_id in tfidf_dict:
+        dbDocument = col.find_one({"token":f"{q}"}) #retrieve the document of the query/term
+        tfidf_dict = dbDocument['postings'] #retrieve its postings in form {doc_id:td-idf}
+        for doc_id in tfidf_dict: 
             # calculates dot product
-            cosine_scores[doc_id] += dict_query[q] * tfidf_dict[doc_id]
-            length_doc[doc_id] = lengthCol.find_one({"doc_id":doc_id})["length"]
+            cosine_scores[doc_id] += dict_query[q] * tfidf_dict[doc_id] #build cosine_scores by dot product
+            length_doc[doc_id] = lengthCol.find_one({"doc_id":doc_id})["length"] # get the length of each doc_id that we come across
     # calculate query magnitude/length
-    query_magnitude = 0
+    query_magnitude = 0 ##calculate length of query ||query||
     for q in dict_query:
         query_magnitude += dict_query[q]**2
     query_magnitude = math.sqrt(query_magnitude)
 
     # perform equation
+    # the final value of cosine scores is calculated
     for document_id in cosine_scores:
-        cosine_scores[document_id] = cosine_scores[document_id]/(query_magnitude*length_doc[document_id])
+        cosine_scores[document_id] = cosine_scores[document_id]/(query_magnitude*length_doc[document_id]) ##Q.DOC/||Q||*||D||
 
     # sort by cosine score increasing
-    # list of doc_ids sorted by increasing cosine score
-    for k in sorted(cosine_scores, key=lambda x: cosine_scores[x], reverse=True):
-        print(f'{k} : {cosine_scores[k]}')
+    # list of doc_ids sorted by decreasing cosine score
+
+    ## TESTING DELETE FOR FINAL TURN IN
+    # for k in sorted(cosine_scores, key=lambda x: cosine_scores[x], reverse=True):
+    #      print(f'{k} : {cosine_scores[k]}')
     return sorted(cosine_scores, key=lambda x: cosine_scores[x], reverse=True)
 
 
-def calc_query_tfidf(query:str):
-    return None
+def retrieve_urls(document_ids: [str], locationDictionary: dict) -> []:
 
-def posting_tfidf(p:dict):
-    """ Used to sort the postings by td_idf"""
-    return p["tf_idf"]
-def retrieve_urls(postings: [dict], locationDictionary: dict) -> []:
-
-    """ Takes in a list of postings which are in dict format and will take that doc_ID retrieve
-        each URLS in order and return it in a list"""
-        ##TODO: retrieve the actual URLS, retrievable from the bookkeeping json file
-    #print(doc_ID)
-
+    """ Takes in a list of document IDS that are already sorted and will take that doc_ID retrieve
+        each URLS in order from the Database and return it in a list"""
+    #build a list of urls
     urlResultList = []
-    #print(postings)
-    for doc_id in postings:
-        urlResultList.append(locationDictionary[doc_id])
-    # for posting in postings:
-    # 	folderLocation = posting["doc_id"]
-    # 	urlResultList.append(locationDictionary[folderLocation])
+    for doc_id in document_ids:
+        urlResultList.append(locationDictionary[doc_id]) #TODO: ##RETRIEVE FROM DATABASE NOT FILE
+    
     return urlResultList
 
 
@@ -107,6 +94,26 @@ def print_information(urls: list) -> None:
 
     return
 
+def calculate_querytdf_idf(query:[str]) -> {}:
+    """ takes in a list of terms and returns a dict with its weight associated"""
+    token_freq = defaultdict(int) ## Used to calculate the weight of each term in query
+    for t, tag in nltk.pos_tag(query):
+        # filtering
+        if t.isascii() and len(t) > 1 and t not in set(stopwords.words('english')):
+            # add lemmatized token to list, increment frequency
+            token = lemmatizer.lemmatize(t.lower(), map_pos_tag(tag))
+            token_freq[token] += 1
+
+    query_tfidf = defaultdict(float) #dict of each token to its tfidf
+    for token in token_freq:
+        if queryExists(token):
+            db_doc = col.find_one({"token": token}) #Retrieve the token and its idf to calc its tf_idf
+            ##DELETE BUT KEEP FOR NOW FOR TESTING
+            ##print(f'token: {token} ')
+            # calcualte td_idf of query
+            query_tfidf[token] = token_freq[token]*db_doc["idf"]
+    return query_tfidf
+
 def search_engine(locationDictionary: dict) -> None:
 
     """asks the user to input a query and displays the list of urls that contains the word"""
@@ -119,23 +126,14 @@ def search_engine(locationDictionary: dict) -> None:
         query = input("Search for: ")
         if query == "!q":
             break
-        ### LEMMATIZE EACH WORD IN QUERY
+        ### LEMMATIZE EACH TERM IN QUERY
+        #use same format when creating the indexer to get same results
         query = nltk.word_tokenize(query)
-        token_freq = defaultdict(int)
-        for t, tag in nltk.pos_tag(query):
-            # filtering
-            if t.isascii() and len(t) > 1 and t not in set(stopwords.words('english')):
-                # add lemmatized token to list, increment frequency
-                token = lemmatizer.lemmatize(t.lower(), map_pos_tag(tag))
-                token_freq[token] += 1
+        
+        query_tfidf = calculate_querytdf_idf(query)
 
-        query_tfidf = defaultdict(float) #dict of each token to its tfidf
-        for token in token_freq:
-            db_doc = col.find_one({"token": token})
-            print(f'token: {token} ')
-            query_tfidf[token] = token_freq[token]*db_doc["idf"]
-
-        postings = retrieve_postings(query_tfidf)
+        #RETRIEVE THE DOC_IDS IN ORDER by using cos sim
+        postings = cos_similarity(query_tfidf)
         if postings == []:
             continue
         urls = retrieve_urls(postings, locationDictionary)
@@ -143,7 +141,28 @@ def search_engine(locationDictionary: dict) -> None:
 
     return
 
+## USED FOR GUI??
+def obtainRelevantPages(query, locationDictionary) -> list:
+    query = nltk.word_tokenize(query)
+    token_freq = defaultdict(int)
+    for t, tag in nltk.pos_tag(query):
+        # filtering
+        if t.isascii() and len(t) > 1 and t not in set(stopwords.words('english')):
+            # add lemmatized token to list, increment frequency
+            token = lemmatizer.lemmatize(t.lower(), map_pos_tag(tag))
+            token_freq[token] += 1
+    query_tfidf = defaultdict(float) #dict of each token to its tfidf
+    for token in token_freq:
+        db_doc = col.find_one({"token": token})
+        if db_doc == None:
+            pass # do some error handling if token isn't found in database
+        query_tfidf[token] = token_freq[token]*db_doc["idf"]
+    postings = cos_similarity(query_tfidf)
+    
+    urls = retrieve_urls(postings, locationDictionary)
+    return urls
 
+## DELETE
 def createLocationDictionary(filename: str) -> dict:
     '''
     Reads the bookkeeping.json file and returns a dictionary corresponding to a folder/file
@@ -155,19 +174,18 @@ def createLocationDictionary(filename: str) -> dict:
         data = json.load(json_file)
     return data
 
+ 
 def queryExists(query:str) -> bool:
     '''
     Takes in a query and checks to see if query exists in db
         returns a bool
     '''
-    count = col.find({f"{query}": {"$exists": True}})
-    if count > 0:
+    db_doc = col.count_documents({"token":query}) #if >0 then it is true
+    if db_doc > 0:
         return True
     return False
 
 if __name__ == "__main__":
-    # test = col.find_one({"token":"stat"})
-        # print(test['postings'])
 
     path = sys.argv[1]
     urlLocationDictionary = createLocationDictionary(path)
