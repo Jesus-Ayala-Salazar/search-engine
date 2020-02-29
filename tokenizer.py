@@ -67,9 +67,10 @@ def encode_posting(postings: set) -> {str: float}:
     returns dictionary of form: {doc_id: tf_idf} where keys and values are
     taken from the set of postings from the inverted index postings_dict
     """
-    result = defaultdict(float)
+    result = []
     for p in postings:
-        result[p.doc_id] = p.tf_idf
+        result.append(p.doc_id,p.tf_idf)
+    result.sort(key=(lambda tup: tup[1]), reverse=True)
     return result
 
 
