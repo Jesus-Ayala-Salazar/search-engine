@@ -100,12 +100,10 @@ def tokenize_file(dirname, doc_id, lemmatizer) -> {str: Posting}:
         # for token in string
         text = nltk.word_tokenize(s)
         for t, tag in nltk.pos_tag(text):
+            # lemmatize
+            token = lemmatizer.lemmatize(t.lower(), map_pos_tag(tag))
             # filtering
-            if t.isascii() and len(t) > 1 and t not in set(
-                    stopwords.words('english')):
-                # lemmatize
-                token = lemmatizer.lemmatize(t.lower(), map_pos_tag(tag))
-
+            if token.isascii() and len(t) > 1 and t not in set(stopwords.words('english')):
                 increment_tags(token, s.parent.name, single_posting_dict)
 
     # check if single_posting_dict has valid tokens
