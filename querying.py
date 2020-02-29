@@ -77,10 +77,13 @@ def retrieve_urls(document_ids: [str]) -> []:
     #build a list of urls
     urlResultList = []
 
+    count = 0
     for doc_id in document_ids:
-        doc_db = lengthCol.find_one({"doc_id":doc_id})
-        url_info = (doc_db["title"],doc_db["url"],doc_db["first-p"])
-        urlResultList.append(url_info)
+        if count <20:
+            doc_db = lengthCol.find_one({"doc_id":doc_id})
+            url_info = (doc_db["title"],doc_db["url"],doc_db["first-p"])
+            urlResultList.append(url_info)
+            count+=1
     
     return urlResultList
 
