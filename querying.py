@@ -64,7 +64,7 @@ def cos_similarity(dict_query: {str:float}) -> [dict]:
     # sort by cosine score increasing
     # list of doc_ids sorted by decreasing cosine score
 
-    ## TESTING DELETE FOR FINAL TURN IN
+    ## TESTING; DELETE FOR FINAL TURN IN
     # for k in sorted(cosine_scores, key=lambda x: cosine_scores[x], reverse=True):
     #      print(f'{k} : {cosine_scores[k]}')
     return sorted(cosine_scores, key=lambda x: cosine_scores[x], reverse=True)
@@ -80,7 +80,7 @@ def retrieve_urls(document_ids: [str]) -> []:
     for doc_id in document_ids:
         doc_db = lengthCol.find_one({"doc_id":doc_id})
         url = doc_db["url"]
-        urlResultList.append(url) #TODO: ##RETRIEVE FROM DATABASE NOT FILE
+        urlResultList.append(url)
     
     return urlResultList
 
@@ -117,6 +117,7 @@ def calculate_querytdf_idf(query:[str]) -> {}:
             query_tfidf[token] = token_freq[token]*db_doc["idf"]
     return query_tfidf
 
+#For Non-GUI querying
 def search_engine() -> None:
 
     """asks the user to input a query and displays the list of urls that contains the word"""
@@ -144,38 +145,16 @@ def search_engine() -> None:
 
     return
 
-## USED FOR GUI??
-def obtainRelevantPages(query, locationDictionary) -> list:
-    query = nltk.word_tokenize(query)
-    token_freq = defaultdict(int)
-    for t, tag in nltk.pos_tag(query):
-        # filtering
-        if t.isascii() and len(t) > 1 and t not in set(stopwords.words('english')):
-            # add lemmatized token to list, increment frequency
-            token = lemmatizer.lemmatize(t.lower(), map_pos_tag(tag))
-            token_freq[token] += 1
-    query_tfidf = defaultdict(float) #dict of each token to its tfidf
-    for token in token_freq:
-        db_doc = col.find_one({"token": token})
-        if db_doc == None:
-            pass # do some error handling if token isn't found in database
-        query_tfidf[token] = token_freq[token]*db_doc["idf"]
-    postings = cos_similarity(query_tfidf)
-    
-    urls = retrieve_urls(postings)
-    return urls
+## USED FOR GUI!
+def obtainRelevantPages(query) -> list:
+    query = nltk.word_tokenize(query)    
+    query_tfidf = calculate_querytdf_idf(query)
 
-## DELETE
-def createLocationDictionary(filename: str) -> dict:
-    '''
-    Reads the bookkeeping.json file and returns a dictionary corresponding to a folder/file
-    and what it's url is.
-        key 	== folder/file (Str)
-        value	== url (Str)
-    '''
-    with open(filename, 'r', encoding='utf8') as json_file:
-        data = json.load(json_file)
-    return data
+    #RETRIEVE THE DOC_IDS IN ORDER by using cos sim
+    postings = cos_similarity(query_tfidf)
+    urls = retrieve_urls(postings)
+    
+    return urls
 
  
 def queryExists(query:str) -> bool:
@@ -191,7 +170,6 @@ def queryExists(query:str) -> bool:
 if __name__ == "__main__":
 
     #path = sys.argv[1]
-    #urlLocationDictionary = createLocationDictionary(path)
     search_engine()
 
 
