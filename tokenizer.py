@@ -218,7 +218,7 @@ if __name__ == "__main__":
     insert_length_dict =[] #data structure for DB insertion
     for doc_id in length_dict:
         length_dict[doc_id] = math.sqrt(length_dict[doc_id])
-        insert_length_dict.append({"doc_id": doc_id, "length": length_dict[doc_id]})
+        insert_length_dict.append({"doc_id": doc_id, "length": length_dict[doc_id], "url": data[doc_id]})
     lengthCollec.insert_many(insert_length_dict)
     # sort by tf-idf 
 	# after it is sorted encode each posting associated with that token
