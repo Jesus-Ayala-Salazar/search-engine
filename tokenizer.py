@@ -19,7 +19,7 @@ import json
 client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mongodb.net/test?retryWrites=true&w=majority") #connects to mongodb
 
 # initialize appropriate collections from MongoDB
-db = client["test-database"]
+db = client["engine-database"]
 collecTest = db["invertedIndex"]
 lengthCollec = db["lengthCollec"]
 
@@ -81,7 +81,7 @@ def tokenize_file(dirname, doc_id, lemmatizer) -> {str: Posting}:
         if not title:
             title = ''
         else:
-            title = title.get_text()
+            title = title.get_text()[:100]
 
         # get first paragraph
         first_p = soup.find('p')
