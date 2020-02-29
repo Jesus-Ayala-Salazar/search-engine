@@ -14,8 +14,8 @@ from nltk.corpus import wordnet
 ### CONNECTS TO CLIENT MONGODB
 client = pymongo.MongoClient("mongodb+srv://admin:admincs121@cluster0-zsift.mongodb.net/test?retryWrites=true&w=majority") #connects to mongodb
 db = client['engine-database'] #Connects to the database where our inverted index is located
-col = db['test-01']
-lengthCol = db['test-length-01'] #Connects to a collection that contains the document_ID along with its length and URL
+col = db['invertedIndex']
+lengthCol = db['lengthCollec'] #Connects to a collection that contains the document_ID along with its length and URL
 lemmatizer = WordNetLemmatizer() #Used to lemmatize the query in order to match the process in the tokenizer
 
 
