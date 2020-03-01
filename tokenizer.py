@@ -69,7 +69,7 @@ def encode_posting(postings: set) -> {str: float}:
     """
     result = []
     for p in postings:
-        result.append(p.doc_id,p.tf_idf)
+        result.append((p.doc_id,p.tf_idf))
     result.sort(key=(lambda tup: tup[1]), reverse=True)
     return result
 
