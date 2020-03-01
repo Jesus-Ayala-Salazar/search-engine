@@ -40,18 +40,18 @@ def map_pos_tag(tag: str) -> str:
         return wordnet.NOUN
 
 
-def calculate_weight(tf_idf: float, freq_dict:{str:int}) -> int:
+def calculate_weight(tf_idf: float, freq_dict:{str:int}) -> float:
     """
     calculates and returns weighted term frequency of a token in a document
     html tag classes and weights:
     plain: 1, strong: 8, h3-h6: 1, h1-h2: 6, anchor: 8, title: 4
     based on: https://www.usenix.org/legacy/publications/library/proceedings/usits97/full_papers/cutler/cutler.pdf
     """
-    WEIGHT_FACTOR = {'strong': 4, 'h3-h6': 1, 'h1-h2': 3, 'a': 4, 'title': 2}
-    weight = 0
+    WEIGHT_FACTOR = {"plain": 0,'strong': 4, 'h3-h6': 1, 'h1-h2': 3, 'a': 4, 'title': 2}
+    weight = tf_idf
     for tag in freq_dict:
-        for freq in freq_dict[tag]:
-            weight += tf_idf+WEIGHT_FACTOR[tag]
+        for freq in range(freq_dict[tag]):
+            weight += WEIGHT_FACTOR[tag]
     return weight
 
 def calculate_tf(freq_dict: {str: int}) -> int:
@@ -69,12 +69,12 @@ def encode_posting(postings: set) -> {str: float}:
     """
     result = []
     for p in postings:
-        result.append(p.doc_id,p.tf_idf)
+        result.append((p.doc_id,p.tf_idf))
     result.sort(key=(lambda tup: tup[1]), reverse=True)
     return result
 
 
-def tokenize_file(dirname, doc_id, lemmatizer) -> {str: Posting}:
+def tokenize_file(dirname, doc_id, lemmatizer, length_dict) -> {str: Posting}:
     """
 
 
@@ -112,7 +112,7 @@ def tokenize_file(dirname, doc_id, lemmatizer) -> {str: Posting}:
             # lemmatize
             token = lemmatizer.lemmatize(t.lower(), map_pos_tag(tag))
             # filtering
-            if token.isascii() and len(t) > 1 and t not in set(stopwords.words('english')):
+            if token.isascii() and len(token) > 1 and token not in set(stopwords.words('english')):
                 increment_tags(token, s.parent.name, single_posting_dict)
 
     # check if single_posting_dict has valid tokens
@@ -155,7 +155,7 @@ def create_postings_dict(data: {str: str}, filename: str, postings_dict: {str: {
     
     # iterate over each html file
     for doc_id in data:
-        single_posting_dict = tokenize_file(dirname, doc_id, lemmatizer)
+        single_posting_dict = tokenize_file(dirname, doc_id, lemmatizer, length_dict)
 
         # add each Posting from current document to global dictionary
         for token in single_posting_dict:
