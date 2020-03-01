@@ -47,10 +47,10 @@ def calculate_weight(tf_idf: float, freq_dict:{str:int}) -> int:
     plain: 1, strong: 8, h3-h6: 1, h1-h2: 6, anchor: 8, title: 4
     based on: https://www.usenix.org/legacy/publications/library/proceedings/usits97/full_papers/cutler/cutler.pdf
     """
-    WEIGHT_FACTOR = {'strong': 4, 'h3-h6': 1, 'h1-h2': 3, 'a': 4, 'title': 2}
+    WEIGHT_FACTOR = {"plain": 0,'strong': 4, 'h3-h6': 1, 'h1-h2': 3, 'a': 4, 'title': 2}
     weight = 0
     for tag in freq_dict:
-        for freq in freq_dict[tag]:
+        for freq in range(freq_dict[tag]):
             weight += tf_idf+WEIGHT_FACTOR[tag]
     return weight
 
