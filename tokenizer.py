@@ -40,7 +40,7 @@ def map_pos_tag(tag: str) -> str:
         return wordnet.NOUN
 
 
-def calculate_weight(tf_idf: float, freq_dict:{str:int}) -> int:
+def calculate_weight(tf_idf: float, freq_dict:{str:int}) -> float:
     """
     calculates and returns weighted term frequency of a token in a document
     html tag classes and weights:
