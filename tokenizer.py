@@ -54,6 +54,7 @@ def calculate_weight(tf_idf: float, freq_dict:{str:int}) -> float:
             weight += WEIGHT_FACTOR[tag]
     return weight
 
+
 def calculate_tf(freq_dict: {str: int}) -> int:
     """
     calculates total freq of each document
@@ -62,10 +63,14 @@ def calculate_tf(freq_dict: {str: int}) -> int:
     for tag in freq_dict:
         result += freq_dict[tag]
     return result #TF
-def encode_posting(postings: set) -> {str: float}:
+
+
+def encode_posting(postings: set) -> [tuple]:
     """
-    returns dictionary of form: {doc_id: tf_idf} where keys and values are
-    taken from the set of postings from the inverted index postings_dict
+    takes in a set of postings associated with a unique token.
+    returns a sorted list of 2-tuples: (doc_id, tfidf) for the given token.
+    sorting by tfidf before creating the index allows for faster times
+      during retrieval phase.
     """
     result = []
     for p in postings:
@@ -76,8 +81,8 @@ def encode_posting(postings: set) -> {str: float}:
 
 def tokenize_file(dirname, doc_id, lemmatizer, length_dict) -> {str: Posting}:
     """
-
-
+    Creates and returns a dictionary mapping each token in the given doc_id html 
+    file to its corresponding Posting to be added later to the inverted index.
     """
     # create absolute path to each html file
     html_filename = os.path.join(dirname, doc_id)
@@ -98,8 +103,6 @@ def tokenize_file(dirname, doc_id, lemmatizer, length_dict) -> {str: Posting}:
             first_p = ''
         else:
             first_p = first_p.get_text()[:280]
-
-
 
     # {token: single Posting}
     single_posting_dict = defaultdict(lambda: Posting(doc_id))
@@ -122,9 +125,12 @@ def tokenize_file(dirname, doc_id, lemmatizer, length_dict) -> {str: Posting}:
         length_dict[doc_id].append(first_p)
     return single_posting_dict
 
-def increment_tags(token, tag, single_posting_dict):
-    """
 
+def increment_tags(token: str, tag: str, single_posting_dict: {str: Posting}):
+    """
+    Increments the token frequency of the token in the current 
+      html file based on the token's html tag. Used later for
+      calculating tfidf based on importance of html tags.
     """
     if tag in {'h1', 'h2'}:
         single_posting_dict[token].tags['h1-h2'] += 1
@@ -146,11 +152,9 @@ def create_postings_dict(data: {str: str}, filename: str, postings_dict: {str: {
       Postings
     returns the number of documents with valid tokens
     """
-    # get web pages directory
+    # get web pages directory, create lemmatizer
     dirname = os.path.dirname(filename)
-
     lemmatizer = WordNetLemmatizer()
-
     num_documents = 0
     
     # iterate over each html file
@@ -180,6 +184,7 @@ def createLocationDictionary(filename: str) -> dict:
         data = json.load(json_file)
     return data
 
+
 if __name__ == "__main__":
     # get absolute path to url index file bookkeeping.json
     path = sys.argv[1]
@@ -193,8 +198,12 @@ if __name__ == "__main__":
     data = createLocationDictionary(path)  # {"folder/file" : "URL"}
 
     # {doc_id: [H1, first-paragraph, length]}
+    # this dictionary maps document ids to an array of its h1 text,
+    #   first <p> tag text, and its document vector length
+    # used for database insertion
     length_dict = defaultdict(list)
 
+    # begin timing tokenization
     begin_time_of_tokenizing = datetime.datetime.now()
     print("run tokenizing")
 
@@ -202,16 +211,16 @@ if __name__ == "__main__":
     # used for calculating idf of each token
     num_documents = create_postings_dict(data, path, postings_dict, length_dict)
 
+    # end timing tokenization
     print("finish tokenizing")
     end_time_of_tokenizing = datetime.datetime.now()
-
     print("Time of commencement (TOKENIZING):", begin_time_of_tokenizing)
     print("Time finish(TOKENIZING): ", end_time_of_tokenizing)
 
 
     # {token: idf}
+    # maps unique tokens to their idf in the corpus and is used for database insertion
     idf_dict = {}
-
 
     for token in postings_dict:
         # calculate idf
@@ -219,13 +228,16 @@ if __name__ == "__main__":
         idf_dict[token] = idf
 
         for posting in postings_dict[token]:
-            #posting.weight = calculate_weight(posting.tags)
+            # calculate tf-idfs of each token for each posting
             tf = 1 + math.log(calculate_tf(posting.tags), 10)
             posting.tf_idf = tf*idf
             posting.tf_idf = calculate_weight(posting.tf_idf,posting.tags)
-            # check
+            # check that vector length hasn't been initialized
             if len(length_dict[posting.doc_id]) == 2:
                 length_dict[posting.doc_id].append(0.0)
+            # calculate squares of each vector component in the equation:
+            #   ||doc_id|| = sqrt(x1^2 + x2^2 + ... + xn^2)
+            #   used later to calculate each document's vector magnitude
             length_dict[posting.doc_id][2] += posting.tf_idf ** 2
 
 
@@ -235,28 +247,27 @@ if __name__ == "__main__":
         # get html file H1 and
         length_dict[doc_id][2] = math.sqrt(length_dict[doc_id][2])
         insert_length_dict.append({"doc_id": doc_id, "length": length_dict[doc_id][2], 'title': length_dict[doc_id][0], 'first-p': length_dict[doc_id][1], 'url': data[doc_id]})
-    lengthCollec.insert_many(insert_length_dict)
-    # sort by tf-idf 
-    # after it is sorted encode each posting associated with that token
-    # then make a dictionary that will pass it into the MongoDB
-    insert_dict = []
+    lengthCollec.insert_many(insert_length_dict)    # insert to MongoDB
+
+    # print sorting times for debugging
     count = 0
     print("begin sorting, appending to dict, and inserting into DB")
     begin_time = datetime.datetime.now()
-    for t in postings_dict:
-    #     collec.insert_one({"token": t, "postings": encode_each_Posting(postings_dict[t])})
 
+    # sort by tf-idf
+    # after it is sorted encode each posting associated with that token
+    # then make a dictionary that will pass it into the MongoDB
+    insert_dict = []    # needed for MongoDB insertion
+    for t in postings_dict:
         insert_dict.append({"token":t, "postings": encode_posting(postings_dict[t]), 'idf': idf_dict[t]})
         if count % 50000 == 0:
             print(f"count: {count}")
         count += 1
 
-    collecTest.insert_many(insert_dict)
-    #collec.insert_many(insert_dict)
+    collecTest.insert_many(insert_dict)    # insert to MongoDB
 
+    # print sorting times for debugging
     end_time = datetime.datetime.now()
     print("END sorting, appending to dict, and inserting into DB")
-
     print("Time of commencement (INSERTION):", begin_time)
     print("Time finish(INSERTION): ", end_time)
-
