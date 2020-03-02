@@ -42,7 +42,7 @@ def cos_similarity(dict_query: {str:float}) -> [dict]:
     cosine_scores = defaultdict(float) ##a dictionary where the key is doc_id and value is its score
     length_doc = defaultdict(float) ### dictionary of the coressponding doc that have the query.
     for q in dict_query:
-        tfidf_list = col.find_one({"token":f"{q}"})['postings'][:100] #retrieve the document of the query/term
+        tfidf_list = col.find_one({"token":f"{q}"})['postings'][:50] #retrieve the document of the query/term
                                                                      #retrieve its postings in form {doc_id:td-idf}
         for doc_id,tf_idf in tfidf_list: 
             # calculates dot product
