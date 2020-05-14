@@ -15,7 +15,3 @@ class Posting:
 			self.freq = args[1]
 			self.tags = args[2]
 			self.tf_idf = args[3]
-
-	# for debugging
-	def __str__(self):
-		return f'doc id: {self.doc_id} | freq: {self.freq} | tags: {self.tags} | tf_idf: {self.tf_idf}'
